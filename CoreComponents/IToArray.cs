@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace CoreComponents
+{
+
+    public interface IToArray
+    {
+
+        object[] ToArray();
+
+    }
+
+    public interface IToArray<out T>
+    {
+
+        T[] ToArray();
+
+    }
+
+}

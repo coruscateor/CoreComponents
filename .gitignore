@@ -1,0 +1,9 @@
+bin/
+obj/
+Backup/
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.pidb.orig
+*.csproj.user
