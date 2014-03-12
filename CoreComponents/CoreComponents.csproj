@@ -47,6 +47,7 @@
   </Target>
   -->
   <ItemGroup>
+    <Compile Include="AssemblySafetyAttribute.cs" />
     <Compile Include="ComposesAttribute.cs" />
     <Compile Include="DefaultValues.cs" />
     <Compile Include="FileSystem\RangeLock.cs" />
@@ -61,8 +62,14 @@
     <Compile Include="Notifications\SelectiveNotifier.cs" />
     <Compile Include="Overflows.cs" />
     <Compile Include="Percentage.cs" />
+    <Compile Include="Properties\Settings3.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="ReadonlyValueContainer.cs" />
     <Compile Include="Reflect\Extentions\ReflectionExtentionMethods.cs" />
+    <Compile Include="Safety.cs" />
     <Compile Include="Serial.cs" />
     <Compile Include="Streaming\IStream.cs" />
     <Compile Include="Streaming\Streamer.cs" />
@@ -89,6 +96,13 @@
     <Compile Include="Data\Tables\IColumn.cs" />
     <Compile Include="Data\Tables\Table.cs" />
     <Compile Include="Threading\AcquisitionQueue.cs" />
+    <Compile Include="Threading\Parallel\CallCheckResult.cs" />
+    <Compile Include="Threading\Parallel\CallLater.cs" />
+    <Compile Include="Threading\Parallel\GetException.cs" />
+    <Compile Include="Threading\Parallel\CallSoon.cs" />
+    <Compile Include="Threading\Parallel\GetReturnValue.cs" />
+    <Compile Include="Threading\Parallel\GetReturnValueWHR.cs" />
+    <Compile Include="Threading\Parallel\WaitHandleRegestered.cs" />
     <Compile Include="Threading\FencedReferenceValueContainer.cs" />
     <Compile Include="Threading\LockingLazyObject.cs" />
     <Compile Include="Threading\ConcurrentValueContainer.cs" />
@@ -172,7 +186,7 @@
     <Compile Include="Items\ArrayCopier.cs" />
     <Compile Include="Items\ArrayValueChecker.cs" />
     <Compile Include="Items\EmptyEnumerator.cs" />
-    <None Include="Items\NotQuiteRight\GenericTable.cs" />
+    <None Include="Items\Old\GenericTable.cs" />
     <Compile Include="Items\ILongCollection.cs" />
     <Compile Include="Items\ILongList.cs" />
     <Compile Include="Items\ImmutableSet.cs" />
@@ -669,14 +683,14 @@
     <Compile Include="Items\UniqueParentedNamedList.cs" />
     <Compile Include="ChangeEventArgs.cs" />
     <Compile Include="ChangeRangeEventArgs.cs" />
-    <None Include="Items\NotQuiteRight\ListBrowser.cs" />
-    <None Include="Items\NotQuiteRight\CountableIndexableBrowser.cs" />
+    <None Include="Items\Old\ListBrowser.cs" />
+    <None Include="Items\Old\CountableIndexableBrowser.cs" />
     <Compile Include="Items\FedEventArgs.cs" />
     <Compile Include="Items\ICache.cs" />
-    <None Include="Items\NotQuiteRight\ITraverseonlySetBrowser.cs" />
+    <None Include="Items\Old\ITraverseonlySetBrowser.cs" />
     <Compile Include="Items\ISubscribeableList.cs" />
     <Compile Include="Items\IVolumeConstrainedList.cs" />
-    <None Include="Items\NotQuiteRight\ListFacade.cs" />
+    <None Include="Items\Old\ListFacade.cs" />
     <None Include="Items\MessageWriting\IMessageWriter.cs" />
     <None Include="Items\MessageWriting\IOMessageWriter.cs" />
     <None Include="Items\MessageWriting\WritingExecption.cs" />

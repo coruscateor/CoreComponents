@@ -10,7 +10,7 @@ namespace CoreComponents.Threading
     public class WaitCounter
     {
 
-        protected uint myNumber;
+        protected uint myCount;
 
         protected SpinLock myWaitSpinlock;
 
@@ -18,7 +18,7 @@ namespace CoreComponents.Threading
         {
         }
 
-        public uint Number
+        public uint Count
         {
 
             get
@@ -31,7 +31,7 @@ namespace CoreComponents.Threading
 
                     myWaitSpinlock.Enter(ref LockTaken);
 
-                    return myNumber;
+                    return myCount;
 
                 }
                 finally
@@ -56,7 +56,7 @@ namespace CoreComponents.Threading
 
                 myWaitSpinlock.Enter(ref LockTaken);
 
-                myNumber++;
+                myCount++;
                     
             }
             finally
@@ -78,8 +78,8 @@ namespace CoreComponents.Threading
             {
 
                 myWaitSpinlock.Enter(ref LockTaken);
-                
-                myNumber--;
+
+                myCount--;
 
             }
             finally
@@ -95,7 +95,7 @@ namespace CoreComponents.Threading
         public bool DontWait(Action TheAction, object TheLockObject)
         {
 
-            if(Number == 0)
+            if(Count == 0)
             {
                 
                 Increment();
@@ -129,7 +129,7 @@ namespace CoreComponents.Threading
         public bool WaitIfLessThan(uint TheLimit, Action TheAction, object TheLockObject)
         {
 
-            if(Number < TheLimit)
+            if(Count < TheLimit)
             {
 
                 Increment();
@@ -163,7 +163,7 @@ namespace CoreComponents.Threading
         public bool DontWait<T>(Action<T> TheAction, T TheParameter, object TheLockObject)
         {
 
-            if(Number == 0)
+            if(Count == 0)
             {
 
                 Increment();
@@ -197,7 +197,7 @@ namespace CoreComponents.Threading
         public bool WaitIfLessThan<T>(uint TheLimit, Action<T> TheAction, T TheParameter, object TheLockObject)
         {
 
-            if(Number < TheLimit)
+            if(Count < TheLimit)
             {
 
                 Increment();
