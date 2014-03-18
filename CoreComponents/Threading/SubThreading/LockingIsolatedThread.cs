@@ -17,7 +17,7 @@ namespace CoreComponents.Threading.SubThreading
 
         private LockingAsynchronousInputOutput<object, object> myThreadIO;
 
-        public LockingIsolatedThread(bool IsParameterisedThread = false, int? TheMaxStackSize = null) : base(IsParameterisedThread, TheMaxStackSize.GetValueOrDefault())
+        public LockingIsolatedThread(int TheMaxStackSize = 0) : base(TheMaxStackSize)
         {
 
             Queue<object> InputQueue = new Queue<object>();

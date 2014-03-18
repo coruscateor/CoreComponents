@@ -18,7 +18,7 @@ namespace CoreComponents.Threading.SubThreading
 
         private ConcurrentAsynchronousInputOutput<object, object> myThreadIO;
 
-        public IsolatedThread(bool IsParameterisedThread = false, int? TheMaxStackSize = null) : base(IsParameterisedThread, TheMaxStackSize.GetValueOrDefault())
+        public IsolatedThread(int TheMaxStackSize = 0) : base(TheMaxStackSize)
         {
 
             ConcurrentQueue<object> InputQueue = new ConcurrentQueue<object>();

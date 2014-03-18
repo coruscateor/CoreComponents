@@ -691,7 +691,7 @@ namespace CoreComponents.Threading.Parallel
 
         }
 
-        protected static Type[] GetTypes(object[] TheObjects)
+        static Type[] GetTypes(object[] TheObjects)
         {
 
             Type[] FoundTypes = new Type[TheObjects.Length];

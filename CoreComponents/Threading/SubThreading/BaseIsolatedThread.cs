@@ -10,6 +10,10 @@ namespace CoreComponents.Threading.SubThreading
     public abstract class BaseIsolatedThread : ISubThread, IDisposable
     {
 
+        private const string CannotWaitExceptionMessage = "Only the thread used by the IsolatedThread can wait on its sleep event";
+
+        private const string ContinueExceptionMessage = "Only the Thread contained by the IsolatedThread can set the continue variable";
+
         private Thread myThread;
 
         private object myParameter = null;
@@ -18,66 +22,41 @@ namespace CoreComponents.Threading.SubThreading
 
         private bool myStopRequested;
 
-        private bool mySleepAtEnd;
-
-        private bool myIsSleepingAtEnd;
-
         private bool myIsActive;
 
-        private bool mySleepingOnSleepEvent;
+        private ManualResetEventSlim myWaitSleepEvent;
 
-        private AutoResetEvent mySleepEvent;
+        private bool myIsWaitingForWake;
 
-        private bool mySleepingOnWaitSleepEvent;
+        private SpinLock mySpinlock;
 
-        private ManualResetEvent myWaitSleepEvent;
+        private bool myHasExited;
 
-        public BaseIsolatedThread(bool IsParameterisedThread = false, int TheMaxStackSize = 0, bool TheSleepAtEnd = false) 
+        private ManualResetEventSlim mySleepEvent;
+
+        private int myMaxStackSize;
+
+        public BaseIsolatedThread(int TheMaxStackSize = 0)
         {
-            
-            if(IsParameterisedThread)
+
+            if(TheMaxStackSize > 0)
             {
 
-                if(TheMaxStackSize > 0)
-                {
+                myMaxStackSize = TheMaxStackSize;
 
-                    myThread = new Thread(MainTakingAParameter, TheMaxStackSize);
-                    
-                }
-                else
-                {
-
-                    myThread = new Thread(MainTakingAParameter);
-                    
-                }
+                myThread = new Thread(RunThreadMain, TheMaxStackSize);
 
             }
             else
             {
 
-                if(TheMaxStackSize > 0)
-                {
-
-                    myThread = new Thread(RunThreadMain, TheMaxStackSize);
-
-                }
-                else
-                {
-
-                    myThread = new Thread(RunThreadMain);
-
-                }
+                myThread = new Thread(RunThreadMain);
 
             }
 
-            if(mySleepAtEnd != TheSleepAtEnd)
-            {
+            myWaitSleepEvent = new ManualResetEventSlim(false);
 
-                mySleepAtEnd = TheSleepAtEnd;
-
-                Thread.MemoryBarrier();
-
-            }
+            mySleepEvent = new ManualResetEventSlim(true);
 
         }
 
@@ -87,62 +66,251 @@ namespace CoreComponents.Threading.SubThreading
             if(!myThread.IsAlive)
             {
 
+                if(HasExited)
+                {
+
+                    Thread OldThread = myThread;
+
+                    if(myMaxStackSize > 0)
+                    {
+
+                        myThread = new Thread(RunThreadMain, myMaxStackSize);
+
+                    }
+                    else
+                    {
+
+                        myThread = new Thread(RunThreadMain);
+
+                    }
+
+                    CopyThreadProperties(OldThread);
+
+                }
+
+                if(myWaitSleepEvent == null)
+                {
+                    
+                    myWaitSleepEvent = new ManualResetEventSlim(false);
+
+                    mySleepEvent = new ManualResetEventSlim(true);
+
+                }
+
                 myThread.Start();
 
             }
             else
             {
 
-                Thread.MemoryBarrier();
-
-                if(myIsSleepingAtEnd && !myIsActive)
-                {
-
-                    //myThread.Interrupt();
-
-                    Wake();
-
-                }
+                Wake();
 
             }
+
+        }
+
+        private void CopyThreadProperties(Thread OldThread)
+        {
+
+            if(myThread.GetApartmentState() != OldThread.GetApartmentState())
+                myThread.SetApartmentState(OldThread.GetApartmentState());
+
+            if(myThread.CurrentCulture != OldThread.CurrentCulture)
+                myThread.CurrentCulture = OldThread.CurrentCulture;
+
+            if(myThread.CurrentUICulture != OldThread.CurrentUICulture)
+                myThread.CurrentUICulture = OldThread.CurrentUICulture;
+
+            if(myThread.IsBackground != OldThread.IsBackground)
+                myThread.IsBackground = OldThread.IsBackground;
+
+            if(myThread.Name != OldThread.Name)
+                myThread.Name = OldThread.Name;
+
+            if(myThread.Priority != OldThread.Priority)
+                myThread.Priority = OldThread.Priority;
+
         }
 
         public void Start(object TheParameter)
         {
 
-            if(!myThread.IsAlive)
+            if(!IsActive)
             {
 
-                myThread.Start(TheParameter);
+                myParameter = TheParameter;
+
+                Start();
 
             }
-            else
+
+        }
+
+        public bool IsWaitingForWake
+        {
+
+            get
             {
 
-                Thread.MemoryBarrier();
+                bool LockTaken = false;
 
-                if(myIsSleepingAtEnd && !myIsActive)
+                try
                 {
 
-                    //myThread.Interrupt();
+                    mySpinlock.Enter(ref LockTaken);
 
-                    Wake();
+                    return myIsWaitingForWake;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
 
                 }
 
             }
+            private set
+            {
+
+                bool LockTaken = false;
+
+                try
+                {
+
+                    mySpinlock.Enter(ref LockTaken);
+
+                    myIsWaitingForWake = value;
+
+                    if(value)
+                        myIsActive = false;
+                    else
+                        myIsActive = true;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
+
+                }
+
+            }
+
+        }
+
+        private void IsNowWaitingForWake()
+        {
+
+            bool LockTaken = false;
+
+            mySpinlock.Enter(ref LockTaken);
+
+            myIsWaitingForWake = true;
+
+            myIsActive = false;
+
+            if(LockTaken)
+                mySpinlock.Exit();
+
+        }
+
+        private void IsNotWaitingForWake()
+        {
+
+            bool LockTaken = false;
+
+            mySpinlock.Enter(ref LockTaken);
+
+            myIsWaitingForWake = false;
+
+            myIsActive = true;
+
+            if(LockTaken)
+                mySpinlock.Exit();
+
+        }
+
+        private bool SetNotWaitingForWake()
+        {
+
+            bool LockTaken = false;
+
+            try
+            {
+
+                mySpinlock.Enter(ref LockTaken);
+
+                if(myIsWaitingForWake)
+                {
+
+                    myIsWaitingForWake = false;
+
+                    myIsActive = true;
+
+                    return true;
+
+                }
+
+            }
+            finally
+            {
+
+                if(LockTaken)
+                    mySpinlock.Exit();
+
+            }
+
+            return false;
 
         }
 
         public void Wake()
         {
 
-            Thread.MemoryBarrier();
-
-            if(mySleepingOnSleepEvent)
+            if(SetNotWaitingForWake())
             {
 
-                mySleepEvent.Set();
+                myWaitSleepEvent.Set();
+
+                myWaitSleepEvent.Reset();
+
+            }
+
+        }
+
+        public void ResetMaxStackSize(int TheMaxStackSize = 0)
+        {
+
+            if(myThread == Thread.CurrentThread && !myThread.IsAlive)
+            {
+
+                if(TheMaxStackSize < 0)
+                {
+
+                    myMaxStackSize = 0;
+
+                }
+                else
+                {
+
+                    myMaxStackSize = TheMaxStackSize;
+
+                }
+
+            }
+
+        }
+
+        public int MaxStackSize
+        {
+
+            get
+            {
+
+                return myMaxStackSize;
 
             }
 
@@ -163,12 +331,12 @@ namespace CoreComponents.Threading.SubThreading
         public void WakeOrInterrupt()
         {
 
-            Thread.MemoryBarrier();
-
-            if(mySleepingOnSleepEvent)
+            if(SetNotWaitingForWake())
             {
 
-                mySleepEvent.Set();
+                myWaitSleepEvent.Set();
+
+                myWaitSleepEvent.Reset();
 
             }
             else if(myThread.ThreadState == ThreadState.WaitSleepJoin)
@@ -204,27 +372,13 @@ namespace CoreComponents.Threading.SubThreading
 
         }
 
-        public bool WaitingOnSleepEvent
+        public bool IsThisThread
         {
 
             get
             {
 
-                Thread.MemoryBarrier();
-
-                return mySleepingOnSleepEvent;
-
-            }
-
-        }
-
-        public bool IsWaitingToStart
-        {
-
-            get
-            {
-
-                return myThread.ThreadState == ThreadState.WaitSleepJoin && !myIsActive;
+                return myThread == Thread.CurrentThread;
 
             }
 
@@ -237,6 +391,18 @@ namespace CoreComponents.Threading.SubThreading
             {
 
                 myThread.Abort();
+
+            }
+
+        }
+
+        public void Abort(object StateInfo)
+        {
+
+            if(myThread.IsAlive)
+            {
+
+                myThread.Abort(StateInfo);
 
             }
 
@@ -344,14 +510,26 @@ namespace CoreComponents.Threading.SubThreading
         public void Stop()
         {
 
-            Thread.MemoryBarrier();
-
-            if(myThread.IsAlive && !myStopRequested)
+            if(myThread.IsAlive && !StopRequested)
             {
 
-                myStopRequested = true;
+                bool LockTaken = false;
 
-                Thread.MemoryBarrier();
+                try
+                {
+
+                    mySpinlock.Enter(ref LockTaken);
+
+                    myStopRequested = true;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
+
+                }
 
             }
 
@@ -363,41 +541,95 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                Thread.MemoryBarrier();
-                
-                return myStopRequested;
-            
+                bool LockTaken = false;
+
+                try
+                {
+
+                    mySpinlock.Enter(ref LockTaken);
+
+                    return myStopRequested;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
+
+                }
+
+            }
+            private set
+            {
+
+                bool LockTaken = false;
+
+                try
+                {
+
+                    mySpinlock.Enter(ref LockTaken);
+
+                    myStopRequested = value;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
+
+                }
+
             }
 
         }
 
-        public bool SleepAtEnd
+        public bool HasExited
         {
 
             get
             {
 
-                return mySleepAtEnd;
+                bool LockTaken = false;
+
+                try
+                {
+
+                    mySpinlock.Enter(ref LockTaken);
+
+                    return myHasExited;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
+
+                }
 
             }
-            set
+            private set
             {
 
-                mySleepAtEnd = value;
+                bool LockTaken = false;
 
-                Thread.MemoryBarrier();
+                try
+                {
 
-            }
+                    mySpinlock.Enter(ref LockTaken);
 
-        }
+                    myHasExited = value;
 
-        public bool IsSleepingAtEnd
-        {
+                }
+                finally
+                {
 
-            get
-            {
+                    if(LockTaken)
+                        mySpinlock.Exit();
 
-                return mySleepAtEnd && myThread.ThreadState == ThreadState.WaitSleepJoin;
+                }
 
             }
 
@@ -410,125 +642,448 @@ namespace CoreComponents.Threading.SubThreading
 
         }
 
-        public void Join()
+        public void JoinExit(bool RethrowInterrupt = false)
         {
 
-            myThread.Join();
-
-        }
-
-        public void Join(int millisecondsTimeout)
-        {
-
-            myThread.Join(millisecondsTimeout);
-
-        }
-
-        public void Join(TimeSpan timeout)
-        {
-
-            myThread.Join(timeout);
-
-        }
-
-        private void CheckWaitSleepEvent()
-        {
-
-            //Does the ManualResetEventExist?
-
-            Thread.MemoryBarrier();
-
-            if(myWaitSleepEvent == null)
+            try
             {
 
-                myWaitSleepEvent = new ManualResetEvent(false);
-
-                Thread.MemoryBarrier();
+                myThread.Join();
 
             }
-
-            //Are there threads waiting?
-
-            Thread.MemoryBarrier();
-
-            if(!mySleepingOnWaitSleepEvent)
+            catch(ThreadInterruptedException e)
             {
 
-                mySleepingOnWaitSleepEvent = true;
-
-                Thread.MemoryBarrier();
+                if(RethrowInterrupt)
+                    throw e;
 
             }
 
         }
 
-        public void WaitJoin()
+        public void JoinExit(Action<ThreadInterruptedException> OnInterrupt)
+        {
+
+            try
+            {
+
+                myThread.Join();
+
+            }
+            catch(ThreadInterruptedException e)
+            {
+
+                OnInterrupt(e);
+
+            }
+
+        }
+
+        public void JoinExit(int millisecondsTimeout, bool RethrowInterrupt = false)
+        {
+
+            try
+            {
+
+                myThread.Join(millisecondsTimeout);
+
+            }
+            catch(ThreadInterruptedException e)
+            {
+
+                if(RethrowInterrupt)
+                    throw e;
+
+            }
+
+        }
+
+        public void JoinExit(int millisecondsTimeout, Action<ThreadInterruptedException> OnInterrupt)
+        {
+
+            try
+            {
+
+                myThread.Join(millisecondsTimeout);
+
+            }
+            catch(ThreadInterruptedException e)
+            {
+
+                OnInterrupt(e);
+
+            }
+
+        }
+
+        public void JoinExit(TimeSpan timeout, bool RethrowInterrupt = false)
+        {
+            
+            try
+            {
+
+                myThread.Join(timeout);
+
+            }
+            catch(ThreadInterruptedException e)
+            {
+
+                if(RethrowInterrupt)
+                    throw e;
+
+            }
+
+        }
+
+        public void JoinExit(TimeSpan timeout, Action<ThreadInterruptedException> OnInterrupt)
+        {
+
+            try
+            {
+
+                myThread.Join(timeout);
+
+            }
+            catch(ThreadInterruptedException e)
+            {
+
+                OnInterrupt(e);
+
+            }
+
+        }
+
+        public virtual bool Join(bool RethrowInterrupt = false)
         {
 
             if(myThread != Thread.CurrentThread)
             {
 
-                CheckWaitSleepEvent();
+                try
+                {
 
-                myWaitSleepEvent.WaitOne();
+                    mySleepEvent.Wait();
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+
+                return true;
 
             }
 
+            return false;
+
         }
 
-        public void WaitJoin(int millisecondsTimeout)
+        public virtual bool Join(CancellationToken TheCancellationToken, bool RethrowInterrupt = false)
         {
 
             if(myThread != Thread.CurrentThread)
             {
 
-                CheckWaitSleepEvent();
+                try
+                {
 
-                myWaitSleepEvent.WaitOne(millisecondsTimeout);
+                    mySleepEvent.Wait(TheCancellationToken);
+
+                    return true;
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+
+                return true;
 
             }
 
+            return false;
+
         }
 
-        public void WaitJoin(TimeSpan timeout)
+        public virtual bool Join(Action<ThreadInterruptedException> OnInterrupt)
         {
 
             if(myThread != Thread.CurrentThread)
             {
 
-                CheckWaitSleepEvent();
+                try
+                {
 
-                myWaitSleepEvent.WaitOne(timeout);
+                    mySleepEvent.Wait();
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    OnInterrupt(e);
+
+                }
+
+                return true;
 
             }
 
+            return false;
+
         }
 
-        public void WaitJoin(int millisecondsTimeout, bool exitContext)
+        public virtual bool Join(CancellationToken TheCancellationToken, Action<ThreadInterruptedException> OnInterrupt)
         {
 
             if(myThread != Thread.CurrentThread)
             {
 
-                CheckWaitSleepEvent();
+                try
+                {
 
-                myWaitSleepEvent.WaitOne(millisecondsTimeout, exitContext);
+                    mySleepEvent.Wait(TheCancellationToken);
+
+                    return true;
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    OnInterrupt(e);
+
+                }
+
+                return true;
 
             }
 
+            return false;
+
         }
 
-        public void WaitJoin(TimeSpan timeout, bool exitContext)
+        public virtual bool Join(int MillisecondsTimeout, bool RethrowInterrupt = false)
         {
 
             if(myThread != Thread.CurrentThread)
             {
 
-                CheckWaitSleepEvent();
+                try
+                {
 
-                myWaitSleepEvent.WaitOne(timeout, exitContext);
+                    return mySleepEvent.Wait(MillisecondsTimeout);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+
+                return true;
 
             }
+
+            return false;
+
+        }
+
+        public virtual bool Join(int MillisecondsTimeout, CancellationToken TheCancellationToken, bool RethrowInterrupt = false)
+        {
+
+            if(myThread != Thread.CurrentThread)
+            {
+
+                try
+                {
+
+                    return mySleepEvent.Wait(MillisecondsTimeout, TheCancellationToken);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+        public virtual bool Join(int MillisecondsTimeout, Action<ThreadInterruptedException> OnInterrupt)
+        {
+
+            if(myThread != Thread.CurrentThread)
+            {
+
+                try
+                {
+
+                    return mySleepEvent.Wait(MillisecondsTimeout);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    OnInterrupt(e);
+
+                }
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+        public virtual bool Join(int MillisecondsTimeout, CancellationToken TheCancellationToken, Action<ThreadInterruptedException> OnInterrupt)
+        {
+
+            if(myThread != Thread.CurrentThread)
+            {
+
+                try
+                {
+
+                    return mySleepEvent.Wait(MillisecondsTimeout, TheCancellationToken);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    OnInterrupt(e);
+
+                }
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+        public virtual bool Join(TimeSpan Timeout, bool RethrowInterrupt = false)
+        {
+
+            if(myThread != Thread.CurrentThread)
+            {
+
+                try
+                {
+
+                    return mySleepEvent.Wait(Timeout);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+        public virtual bool Join(TimeSpan Timeout, CancellationToken TheCancellationToken, bool RethrowInterrupt = false)
+        {
+
+            if(myThread != Thread.CurrentThread)
+            {
+
+                try
+                {
+
+                    return mySleepEvent.Wait(Timeout, TheCancellationToken);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+        public virtual bool Join(TimeSpan Timeout, Action<ThreadInterruptedException> OnInterrupt)
+        {
+
+            if(myThread != Thread.CurrentThread)
+            {
+
+                try
+                {
+
+                    mySleepEvent.Wait(Timeout);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    OnInterrupt(e);
+
+                }
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+        public virtual bool Join(TimeSpan Timeout, CancellationToken TheCancellationToken, Action<ThreadInterruptedException> OnInterrupt)
+        {
+
+            if(myThread != Thread.CurrentThread)
+            {
+
+                try
+                {
+
+                    return mySleepEvent.Wait(Timeout, TheCancellationToken);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    OnInterrupt(e);
+
+                }
+
+                return true;
+
+            }
+
+            return false;
 
         }
 
@@ -537,194 +1092,93 @@ namespace CoreComponents.Threading.SubThreading
         private void RunThreadMain() 
         {
 
-            bool Continue = false;
+            bool LockTaken = false;
+
+            try
+            {
+
+                mySpinlock.Enter(ref LockTaken);
+
+                //SetNotExited
+
+                myHasExited = false;
+
+                //ResetStopRequested
+
+                if(myStopRequested)
+                    myStopRequested = false;
+
+                //SetActive
+
+                myIsActive = true;
+
+                //RemoveException
+
+                if(myException != null)
+                    myException = null;
+
+            }
+            finally
+            {
+
+                if(LockTaken)
+                {
+
+                    mySpinlock.Exit();
+
+                    LockTaken = false;
+
+                }
+
+            }
 
             do
             {
 
-                myIsActive = true;
-
-                Thread.MemoryBarrier();
-
                 try
                 {
 
-                    Thread.MemoryBarrier();
+                    mySleepEvent.Reset();
 
-                    if(myException != null)
-                    {
-
-                        myException = null;
-
-                        Thread.MemoryBarrier();
-
-                    }
-
-                    Thread.MemoryBarrier();
-
-                    if(myParameter != null)
-                    {
-
-                        myParameter = null;
-
-                        Thread.MemoryBarrier();
-
-                    }
-
-                    Thread.MemoryBarrier();
-
-                    if(!myStopRequested)
-                    {
-
-                        ThreadMain();
-
-                    }
+                    ThreadMain();
 
                 }
                 catch(Exception e)
                 {
 
-                    myException = e;
+                    Exception = e;
 
-                    Thread.MemoryBarrier();
+                    break;
 
                 }
                 finally
                 {
 
-                    Thread.MemoryBarrier();
-
-                    if(myStopRequested)
-                    {
-
-                        Thread.MemoryBarrier();
-
-                        if(myWaitSleepEvent != null)
-                        {
-
-                            Thread.MemoryBarrier();
-
-                            if(!mySleepingOnWaitSleepEvent)
-                                myWaitSleepEvent.Reset();
-
-                        }
-
-                        myStopRequested = false;
-
-                        Thread.MemoryBarrier();
-
-                        if(mySleepAtEnd)
-                        {
-
-                            mySleepAtEnd = false;
-
-                            Thread.MemoryBarrier();
-
-                        }
-
-                        if(Continue)
-                            Continue = false;
-
-                    }
-                    else
-                    {
-
-                        Thread.MemoryBarrier();
-
-                        if(mySleepAtEnd)
-                        {
-
-                            Thread.MemoryBarrier();
-
-                            if(!myIsSleepingAtEnd)
-                            {
-
-                                myIsSleepingAtEnd = true;
-
-                                Thread.MemoryBarrier();
-
-                            }
-
-                            if(!Continue)
-                                Continue = true;
-
-                        }
-
-                        myIsActive = false;
-
-                        Thread.MemoryBarrier();
-
-                    }
+                    mySleepEvent.Set();
 
                 }
 
-                Thread.MemoryBarrier();
-
-                if(myIsSleepingAtEnd)
+                if(!StopRequested)
                 {
-
-                    Thread.MemoryBarrier();
-
-                    if(myStopRequested)
-                    {
-
-                        myIsSleepingAtEnd = false;
-
-                        Thread.MemoryBarrier();
-
-                        break;
-
-                    }
-
-                    Thread.MemoryBarrier();
-
-                    if(myWaitSleepEvent != null)
-                    {
-
-                        Thread.MemoryBarrier();
-
-                        if(!mySleepingOnWaitSleepEvent)
-                        {
-
-                            try
-                            {
-
-                                myWaitSleepEvent.Set();
-
-                            }
-                            finally
-                            {
-
-                                mySleepingOnWaitSleepEvent = false;
-
-                                Thread.MemoryBarrier();
-
-                            }
-
-                        }
-
-                    }
 
                     try
                     {
 
-                        Sleep();
+                        myWaitSleepEvent.Wait();
+
+                    }
+                    catch(ThreadInterruptedException e)
+                    {
+
+                        Exception = e;
 
                     }
                     catch(Exception e)
                     {
 
-                        myException = e;
+                        Exception = e;
 
-                        Thread.MemoryBarrier();
-
-                    }
-                    finally
-                    {
-                        
-                        myIsSleepingAtEnd = false;
-
-                        Thread.MemoryBarrier();
+                        break;
 
                     }
 
@@ -732,221 +1186,32 @@ namespace CoreComponents.Threading.SubThreading
                 else
                 {
 
-                    if(Continue)
-                        Continue = false;
+                    break;
 
                 }
 
             }
-            while(Continue);
+            while(!StopRequested);
 
-            Thread.MemoryBarrier();
-
-            if(myWaitSleepEvent != null)
+            try
             {
 
-                Thread.MemoryBarrier();
+                mySpinlock.Enter(ref LockTaken);
 
-                if(!mySleepingOnWaitSleepEvent)
-                {
+                //SetInActive
 
-                    try
-                    {
+                myIsActive = false;
 
-                        myWaitSleepEvent.Set();
+                //SetExited
 
-                    }
-                    finally
-                    {
-
-                        mySleepingOnWaitSleepEvent = false;
-
-                        Thread.MemoryBarrier();
-
-                    }
-
-                }
+                myHasExited = true;
 
             }
-
-        }
-
-        protected virtual void MainTakingAParameter(object TheParameter) 
-        {
-            
-            bool Continue = false;
-
-            do
+            finally
             {
 
-                myIsActive = true;
-
-                Thread.MemoryBarrier();
-
-                try
-                {
-
-                    Thread.MemoryBarrier();
-
-                    if(myException != null)
-                    {
-
-                        myException = null;
-
-                        Thread.MemoryBarrier();
-
-                    }
-
-                    Thread.MemoryBarrier();
-
-                    if(!myStopRequested)
-                    {
-
-                        Thread.MemoryBarrier();
-
-                         if(myWaitSleepEvent != null)
-                         {
-
-                             Thread.MemoryBarrier();
-
-                             if(!mySleepingOnWaitSleepEvent)
-                                 myWaitSleepEvent.Reset();
-
-                         }
-
-                        Thread.MemoryBarrier();
-
-                        if(myParameter != TheParameter)
-                        {
-
-                            myParameter = TheParameter;
-
-                            Thread.MemoryBarrier();
-
-                        }
-
-                        ThreadMain();
-
-                    }
-
-                }
-                catch (Exception e)
-                {
-
-                    myException = e;
-
-                    Thread.MemoryBarrier();
-
-                }
-                finally
-                {
-
-                    Thread.MemoryBarrier();
-
-                    if(mySleepAtEnd)
-                    {
-
-                        Thread.MemoryBarrier();
-
-                        if(!myIsSleepingAtEnd)
-                        {
-
-                            myIsSleepingAtEnd = true;
-
-                            Thread.MemoryBarrier();
-
-                        }
-
-                        if(!Continue)
-                            Continue = true;
-
-                    }
-
-                    myIsActive = false;
-
-                    Thread.MemoryBarrier();
-
-                }
-
-                Thread.MemoryBarrier();
-
-                if(myIsSleepingAtEnd)
-                {
-
-                    Thread.MemoryBarrier();
-
-                    if(myStopRequested)
-                    {
-
-                        myIsSleepingAtEnd = false;
-
-                        Thread.MemoryBarrier();
-
-                        break;
-
-                    }
-
-                    try
-                    {
-
-                        Sleep();
-
-                    }
-                    catch(Exception e)
-                    {
-
-                        myException = e;
-
-                        Thread.MemoryBarrier();
-
-                    }
-                    finally
-                    {
-
-                        myIsSleepingAtEnd = false;
-
-                        Thread.MemoryBarrier();
-
-                    }
-
-                }
-                else
-                {
-
-                    if(Continue)
-                        Continue = false;
-
-                }
-
-            }
-            while(Continue);
-
-            Thread.MemoryBarrier();
-
-            if(myWaitSleepEvent != null)
-            {
-
-                Thread.MemoryBarrier();
-
-                if(!mySleepingOnWaitSleepEvent)
-                {
-
-                    try
-                    {
-
-                        myWaitSleepEvent.Set();
-
-                    }
-                    finally
-                    {
-
-                        mySleepingOnWaitSleepEvent = false;
-
-                        Thread.MemoryBarrier();
-
-                    }
-
-                }
+                if(LockTaken)
+                    mySpinlock.Exit();
 
             }
 
@@ -958,9 +1223,45 @@ namespace CoreComponents.Threading.SubThreading
             get 
             {
 
-                Thread.MemoryBarrier();
+                bool LockTaken = false;
 
-                return myException;
+                try
+                {
+
+                    mySpinlock.Enter(ref LockTaken);
+
+                    return myException;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
+
+                }
+
+            }
+            private set
+            {
+
+                bool LockTaken = false;
+
+                try
+                {
+
+                    mySpinlock.Enter(ref LockTaken);
+
+                    myException = value;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
+
+                }
 
             }
         
@@ -971,10 +1272,24 @@ namespace CoreComponents.Threading.SubThreading
 
             get
             {
+                
+                bool LockTaken = false;
 
-                Thread.MemoryBarrier();
+                try
+                {
 
-                return myException != null;
+                    mySpinlock.Enter(ref LockTaken);
+
+                    return myException != null;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
+
+                }
 
             }
 
@@ -999,10 +1314,46 @@ namespace CoreComponents.Threading.SubThreading
 
             get
             {
+                                                
+                bool LockTaken = false;
 
-                Thread.MemoryBarrier();
+                try
+                {
 
-                return myIsActive;
+                    mySpinlock.Enter(ref LockTaken);
+
+                    return myIsActive;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
+
+                }
+
+            }
+            private set
+            {
+
+                bool LockTaken = false;
+
+                try
+                {
+
+                    mySpinlock.Enter(ref LockTaken);
+
+                    myIsActive = value;
+
+                }
+                finally
+                {
+
+                    if(LockTaken)
+                        mySpinlock.Exit();
+
+                }
 
             }
 
@@ -1015,6 +1366,12 @@ namespace CoreComponents.Threading.SubThreading
             {
 
                 return myParameter;
+
+            }
+            set
+            {
+
+                myParameter = value;
 
             }
 
@@ -1039,501 +1396,578 @@ namespace CoreComponents.Threading.SubThreading
 
         }
 
-        private void CheckSetWaitSleepEvent()
+        protected virtual void Sleep(bool RethrowInterrupt = false)
         {
 
-            Thread.MemoryBarrier();
-
-            if(myWaitSleepEvent != null)
+            if(myThread == Thread.CurrentThread)
             {
 
-                Thread.MemoryBarrier();
-
-                if(mySleepingOnWaitSleepEvent)
+                try
                 {
 
-                    try
-                    {
+                    IsNowWaitingForWake();
 
-                        myWaitSleepEvent.Set();
-
-                    }
-                    finally
-                    {
-
-                        mySleepingOnWaitSleepEvent = false;
-
-                        Thread.MemoryBarrier();
-
-                    }
+                    myWaitSleepEvent.Wait();
 
                 }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
+
+                }
+
+            }
+            else
+            {
+
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
 
         }
 
-        protected bool Sleep()
+        protected virtual void Sleep(CancellationToken TheCancellationToken, bool RethrowInterrupt = false)
         {
 
-            try
+            if(myThread == Thread.CurrentThread)
             {
 
-                Thread.MemoryBarrier();
-
-                if(mySleepEvent == null)
+                try
                 {
 
-                    mySleepEvent = new AutoResetEvent(false);
+                    IsNowWaitingForWake();
 
-                    Thread.MemoryBarrier();
+                    myWaitSleepEvent.Wait(TheCancellationToken);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
 
                 }
 
-                mySleepingOnSleepEvent = true;
-
-                Thread.MemoryBarrier();
-
-                CheckSetWaitSleepEvent();
-
-                return mySleepEvent.WaitOne();
-
             }
-            catch(ThreadInterruptedException e)
-            {
-            }
-            finally
+            else
             {
 
-                mySleepingOnSleepEvent = false;
-
-                Thread.MemoryBarrier();
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
-
-            return false;
 
         }
 
-        protected bool Sleep(Action OnInterrupt)
+        protected virtual void Sleep(Action<ThreadInterruptedException> OnInterrupt)
         {
 
-            try
+            if(myThread == Thread.CurrentThread)
             {
 
-                Thread.MemoryBarrier();
+                ThreadInterruptedException TIE = null;
 
-                if(mySleepEvent == null)
+                try
                 {
 
-                    mySleepEvent = new AutoResetEvent(false);
+                    IsNowWaitingForWake();
 
-                    Thread.MemoryBarrier();
+                    myWaitSleepEvent.Wait();
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    TIE = e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
 
                 }
 
-                mySleepingOnSleepEvent = true;
-
-                Thread.MemoryBarrier();
-
-                CheckSetWaitSleepEvent();
-
-                return mySleepEvent.WaitOne();
+                if(TIE != null)
+                    OnInterrupt(TIE);
 
             }
-            catch(ThreadInterruptedException e)
+            else
             {
 
-                OnInterrupt();
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
-            finally
-            {
-
-                mySleepingOnSleepEvent = false;
-
-                Thread.MemoryBarrier();
-
-            }
-
-            return false;
 
         }
 
-        protected bool Sleep(Action<ThreadInterruptedException> OnInterrupt)
+        protected virtual void Sleep(CancellationToken TheCancellationToken, Action<ThreadInterruptedException> OnInterrupt)
         {
 
-            try
+            if(myThread == Thread.CurrentThread)
             {
 
-                Thread.MemoryBarrier();
+                ThreadInterruptedException TIE = null;
 
-                if(mySleepEvent == null)
+                try
                 {
 
-                    mySleepEvent = new AutoResetEvent(false);
+                    IsNowWaitingForWake();
 
-                    Thread.MemoryBarrier();
+                    myWaitSleepEvent.Wait(TheCancellationToken);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    TIE = e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
 
                 }
 
-                mySleepingOnSleepEvent = true;
-
-                Thread.MemoryBarrier();
-
-                CheckSetWaitSleepEvent();
-
-                return mySleepEvent.WaitOne();
+                if(TIE != null)
+                    OnInterrupt(TIE);
 
             }
-            catch(ThreadInterruptedException e)
+            else
             {
 
-                OnInterrupt(e);
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
-            finally
-            {
-
-                mySleepingOnSleepEvent = false;
-
-                Thread.MemoryBarrier();
-
-            }
-
-            return false;
 
         }
 
-        protected bool Sleep(int Timeout)
+        protected virtual void Sleep(int Timeout, bool RethrowInterrupt = false)
         {
 
-            try
+            if(myThread == Thread.CurrentThread)
             {
 
-                Thread.MemoryBarrier();
-
-                if(mySleepEvent == null)
+                try
                 {
 
-                    mySleepEvent = new AutoResetEvent(false);
+                    IsNowWaitingForWake();
 
-                    Thread.MemoryBarrier();
+                    myWaitSleepEvent.Wait(Timeout);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
 
                 }
 
-                mySleepingOnSleepEvent = true;
-
-                Thread.MemoryBarrier();
-
-                CheckSetWaitSleepEvent();
-
-                return mySleepEvent.WaitOne(Timeout);
-
             }
-            catch(ThreadInterruptedException e)
-            {
-            }
-            finally
+            else
             {
 
-                mySleepingOnSleepEvent = false;
-
-                Thread.MemoryBarrier();
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
-
-            return false;
 
         }
 
-        protected bool Sleep(int Timeout, Action OnInterrupt)
+        protected virtual void Sleep(int Timeout, CancellationToken TheCancellationToken, bool RethrowInterrupt = false)
         {
 
-            try
+            if(myThread == Thread.CurrentThread)
             {
 
-                Thread.MemoryBarrier();
-
-                if(mySleepEvent == null)
+                try
                 {
 
-                    mySleepEvent = new AutoResetEvent(false);
+                    IsNowWaitingForWake();
 
-                    Thread.MemoryBarrier();
+                    myWaitSleepEvent.Wait(Timeout, TheCancellationToken);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
 
                 }
 
-                mySleepingOnSleepEvent = true;
-
-                Thread.MemoryBarrier();
-
-                CheckSetWaitSleepEvent();
-
-                return mySleepEvent.WaitOne(Timeout);
-
             }
-            catch(ThreadInterruptedException e)
+            else
             {
 
-                OnInterrupt();
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
-            finally
-            {
-
-                mySleepingOnSleepEvent = false;
-
-                Thread.MemoryBarrier();
-
-            }
-
-            return false;
 
         }
 
-        protected bool Sleep(int Timeout, Action<ThreadInterruptedException> OnInterrupt)
+        protected virtual void Sleep(int Timeout, Action<ThreadInterruptedException> OnInterrupt)
         {
 
-            try
+            if(myThread == Thread.CurrentThread)
             {
 
-                Thread.MemoryBarrier();
+                ThreadInterruptedException TIE = null;
 
-                if(mySleepEvent == null)
+                try
                 {
 
-                    mySleepEvent = new AutoResetEvent(false);
+                    IsNowWaitingForWake();
 
-                    Thread.MemoryBarrier();
+                    myWaitSleepEvent.Wait(Timeout);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    TIE = e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
 
                 }
 
-                mySleepingOnSleepEvent = true;
-
-                Thread.MemoryBarrier();
-
-                CheckSetWaitSleepEvent();
-
-                return mySleepEvent.WaitOne(Timeout);
+                if(TIE != null)
+                    OnInterrupt(TIE);
 
             }
-            catch(ThreadInterruptedException e)
+            else
             {
 
-                OnInterrupt(e);
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
-            finally
-            {
-
-                mySleepingOnSleepEvent = false;
-
-                Thread.MemoryBarrier();
-
-            }
-
-            return false;
 
         }
 
-        protected bool Sleep(TimeSpan Timeout)
+        protected virtual void Sleep(int Timeout, CancellationToken TheCancellationToken, Action<ThreadInterruptedException> OnInterrupt)
         {
 
-            try
+            if(myThread == Thread.CurrentThread)
             {
 
-                Thread.MemoryBarrier();
+                ThreadInterruptedException TIE = null;
 
-                if(mySleepEvent == null)
+                try
                 {
 
-                    mySleepEvent = new AutoResetEvent(false);
+                    IsNowWaitingForWake();
 
-                    Thread.MemoryBarrier();
+                    myWaitSleepEvent.Wait(Timeout, TheCancellationToken);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    TIE = e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
 
                 }
 
-                mySleepingOnSleepEvent = true;
-
-                Thread.MemoryBarrier();
-
-                CheckSetWaitSleepEvent();
-
-                return mySleepEvent.WaitOne(Timeout);
+                if(TIE != null)
+                    OnInterrupt(TIE);
 
             }
-            catch(ThreadInterruptedException e)
-            {
-            }
-            finally
+            else
             {
 
-                mySleepingOnSleepEvent = false;
-
-                Thread.MemoryBarrier();
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
+            
+        }
 
-            return false;
+        protected virtual void Sleep(TimeSpan Timeout, bool RethrowInterrupt = false)
+        {
+
+            if(myThread == Thread.CurrentThread)
+            {
+
+                try
+                {
+
+                    IsNowWaitingForWake();
+
+                    myWaitSleepEvent.Wait(Timeout);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
+
+                }
+
+            }
+            else
+            {
+
+                throw new CannotWaitException(CannotWaitExceptionMessage);
+
+            }
 
         }
 
-        protected bool Sleep(TimeSpan Timeout, Action OnInterrupt)
+        protected virtual void Sleep(TimeSpan Timeout, CancellationToken TheCancellationToken, bool RethrowInterrupt = false)
         {
 
-            try
+            if(myThread == Thread.CurrentThread)
             {
 
-                Thread.MemoryBarrier();
-
-                if(mySleepEvent == null)
+                try
                 {
 
-                    mySleepEvent = new AutoResetEvent(false);
+                    IsNowWaitingForWake();
 
-                    Thread.MemoryBarrier();
+                    myWaitSleepEvent.Wait(Timeout, TheCancellationToken);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    if(RethrowInterrupt)
+                        throw e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
 
                 }
 
-                mySleepingOnSleepEvent = true;
-
-                Thread.MemoryBarrier();
-
-                CheckSetWaitSleepEvent();
-
-                return mySleepEvent.WaitOne(Timeout);
-
             }
-            catch(ThreadInterruptedException e)
+            else
             {
 
-                OnInterrupt();
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
-            finally
-            {
-
-                mySleepingOnSleepEvent = false;
-
-                Thread.MemoryBarrier();
-
-            }
-
-            return false;
 
         }
 
-        protected bool Sleep(TimeSpan Timeout, Action<ThreadInterruptedException> OnInterrupt)
+        protected virtual void Sleep(TimeSpan Timeout, Action<ThreadInterruptedException> OnInterrupt)
         {
-
-            try
+            
+            if(myThread == Thread.CurrentThread)
             {
 
-                Thread.MemoryBarrier();
+                ThreadInterruptedException TIE = null;
 
-                if(mySleepEvent == null)
+                try
                 {
 
-                    mySleepEvent = new AutoResetEvent(false);
+                    IsNowWaitingForWake();
 
-                    Thread.MemoryBarrier();
+                    myWaitSleepEvent.Wait(Timeout);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    TIE = e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
 
                 }
 
-                mySleepingOnSleepEvent = true;
-
-                Thread.MemoryBarrier();
-
-                CheckSetWaitSleepEvent();
-
-                return mySleepEvent.WaitOne(Timeout);
+                if(TIE != null)
+                    OnInterrupt(TIE);
 
             }
-            catch(ThreadInterruptedException e)
+            else
             {
 
-                OnInterrupt(e);
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
-            finally
+
+        }
+
+        protected virtual void Sleep(TimeSpan Timeout, CancellationToken TheCancellationToken, Action<ThreadInterruptedException> OnInterrupt)
+        {
+
+            if(myThread == Thread.CurrentThread)
             {
 
-                mySleepingOnSleepEvent = false;
+                ThreadInterruptedException TIE = null;
 
-                Thread.MemoryBarrier();
+                try
+                {
+
+                    IsNowWaitingForWake();
+
+                    myWaitSleepEvent.Wait(Timeout, TheCancellationToken);
+
+                }
+                catch(ThreadInterruptedException e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    TIE = e;
+
+                }
+                catch(Exception e)
+                {
+
+                    IsNotWaitingForWake();
+
+                    throw e;
+
+                }
+
+                if(TIE != null)
+                    OnInterrupt(TIE);
+
+            }
+            else
+            {
+
+                throw new CannotWaitException(CannotWaitExceptionMessage);
 
             }
 
-            return false;
+        }
+
+        public void TryExit()
+        {
+
+            StopRequested = true;
+
+            WakeOrInterrupt();
+
+        }
+
+        public bool HasDisposed
+        {
+
+            get
+            {
+
+                return myWaitSleepEvent != null;
+
+            }
 
         }
 
         public void Dispose()
         {
 
-            Thread.MemoryBarrier();
-
-            if(mySleepEvent != null)
+            if(!myThread.IsAlive)
             {
 
-                Thread.MemoryBarrier();
+                myWaitSleepEvent.Set();
 
-                if(myIsActive)
-                {
+                myWaitSleepEvent.Dispose();
 
-                    if(myThread != Thread.CurrentThread)
-                    {
+                myWaitSleepEvent = null;
 
-                        lock(myThread)
-                        {
+                mySleepEvent.Set();
 
-                            throw new Exception("Active thread SleepEvent must be disposed by the creating Thread");
+                mySleepEvent.Dispose();
 
-                        }
+                mySleepEvent = null;
 
-                    }
+            }
+            else
+            {
 
-                }
-
-                Thread.MemoryBarrier();
-
-                if(mySleepingOnSleepEvent)
-                {
-
-                    mySleepEvent.Set();
-
-                }
-
-                Thread.MemoryBarrier();
-
-                if(mySleepEvent != null)
-                {
-
-                    AutoResetEvent Event = mySleepEvent;
-
-                    mySleepEvent = null;
-
-                    Thread.MemoryBarrier();
-
-                    Event.Dispose();
-
-                }
-
-                Thread.MemoryBarrier();
-
-                if(myWaitSleepEvent != null)
-                {
-
-                    ManualResetEvent Event = myWaitSleepEvent;
-
-                    myWaitSleepEvent = null;
-
-                    Thread.MemoryBarrier();
-
-                    Event.Dispose();
-
-                }
+                throw new Exception("The thread cannot be disposed of as it is still alive");
 
             }
 

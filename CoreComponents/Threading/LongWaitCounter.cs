@@ -7,18 +7,18 @@ using System.Threading;
 namespace CoreComponents.Threading
 {
 
-    public class WaitCounter
+    public class LongWaitCounter
     {
 
-        protected uint myCount;
+        protected ulong myCount;
 
         protected SpinLock myWaitSpinlock;
 
-        public WaitCounter()
+        public LongWaitCounter()
         {
         }
 
-        public uint Count
+        public ulong Count
         {
 
             get
@@ -56,7 +56,7 @@ namespace CoreComponents.Threading
 
                 myWaitSpinlock.Enter(ref LockTaken);
 
-                if(myCount < uint.MaxValue)
+                if(myCount < ulong.MaxValue)
                 {
 
                     myCount++;
@@ -64,7 +64,7 @@ namespace CoreComponents.Threading
                     return true;
 
                 }
-                    
+
             }
             finally
             {
@@ -88,7 +88,7 @@ namespace CoreComponents.Threading
 
                 myWaitSpinlock.Enter(ref LockTaken);
 
-                if(myCount > 0u)
+                if(myCount > 0L)
                 {
 
                     myCount--;
@@ -120,7 +120,7 @@ namespace CoreComponents.Threading
 
                 myWaitSpinlock.Enter(ref LockTaken);
 
-                if(myCount == 0u)
+                if(myCount == 0uL)
                 {
 
                     myCount++;
@@ -142,7 +142,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool IncrementIfCountIsLessThan(uint TheLimit)
+        public bool IncrementIfCountIsLessThan(ulong TheLimit)
         {
 
             bool LockTaken = false;
@@ -206,11 +206,14 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool WaitIfLessThan(uint TheLimit, Action TheAction, object TheLockObject)
+        public bool WaitIfLessThan(ulong TheLimit, Action TheAction, object TheLockObject)
         {
 
             if(IncrementIfCountIsLessThan(TheLimit))
             {
+
+                if(!Increment())
+                    return false;
 
                 try
                 {
@@ -270,11 +273,14 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool WaitIfLessThan<T>(uint TheLimit, Action<T> TheAction, T TheParameter, object TheLockObject)
+        public bool WaitIfLessThan<T>(ulong TheLimit, Action<T> TheAction, T TheParameter, object TheLockObject)
         {
 
             if(IncrementIfCountIsLessThan(TheLimit))
             {
+
+                if(!Increment())
+                    return false;
 
                 try
                 {

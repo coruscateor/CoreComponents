@@ -96,6 +96,9 @@
     <Compile Include="Data\Tables\IColumn.cs" />
     <Compile Include="Data\Tables\Table.cs" />
     <Compile Include="Threading\AcquisitionQueue.cs" />
+    <Compile Include="Threading\BigWaitCounter.cs" />
+    <Compile Include="Threading\CannotWaitException.cs" />
+    <Compile Include="Threading\LongWaitCounter.cs" />
     <Compile Include="Threading\Parallel\CallCheckResult.cs" />
     <Compile Include="Threading\Parallel\CallLater.cs" />
     <Compile Include="Threading\Parallel\GetException.cs" />
@@ -162,6 +165,7 @@
     <Compile Include="Threading\TSTemporalReference.cs" />
     <Compile Include="Threading\WaitCounter.cs" />
     <Compile Include="Time\TimeConversions.cs" />
+    <Compile Include="TypeSyffix.cs" />
     <Compile Include="ValueContainer.cs" />
     <Compile Include="ICaughtExecption.cs" />
     <Compile Include="IExecute.cs" />
@@ -197,7 +201,7 @@
     <Compile Include="Items\Tables\TypedColumnTable.cs" />
     <Compile Include="Items\Tables\TypedValueColumn.cs" />
     <Compile Include="Streaming\StreamList.cs" />
-    <Compile Include="Threading\SubThreading\BaseSleepyIsolatedThread.cs" />
+    <None Include="Threading\SubThreading\Old\BaseSleepyIsolatedThread.cs" />
     <Compile Include="Threading\ConcurrentInputWaitQueueContainer.cs" />
     <Compile Include="Threading\ConcurrentOutputWaitQueueContainer.cs" />
     <Compile Include="Threading\ConcurrentQueueContainerCreator.cs" />
@@ -349,7 +353,6 @@
     <Compile Include="Items\ItemsTraverser.cs" />
     <Compile Include="Items\UniqueItemCollection.cs" />
     <Compile Include="Threading\SubThreading\BaseIsolatedWorkerThread.cs" />
-    <None Include="Threading\SubThreading\Old\BaseSleepyIsolatedThread.cs" />
     <None Include="Threading\SubThreading\Old\ConditionWatcher.cs" />
     <None Include="Threading\Jobs\Old\IJob.cs" />
     <None Include="Threading\Jobs\Old\IJobHandler.cs" />
@@ -977,6 +980,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq">
