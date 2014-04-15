@@ -80,7 +80,7 @@ namespace CoreComponents.Data.Tables
 
             ReferenceValueContainer<ValueContainer<T>> ItemAtIndex = myCells[TheIndex];
 
-            if(ItemAtIndex.ValueIsNotNull)
+            if(ItemAtIndex.HasValue)
                 ItemAtIndex.Value.Value = TheItem;
             else
                 ItemAtIndex.Value = new ValueContainer<T>(TheItem);
@@ -210,7 +210,7 @@ namespace CoreComponents.Data.Tables
 
                 ReferenceValueContainer<ValueContainer<T>> FoundReferenceContainer = myCells[TheIndex];
 
-                if(FoundReferenceContainer.ValueIsNotNull)
+                if(FoundReferenceContainer.HasValue)
                 {
 
                     return new ReferenceValueContainer<ValueContainer<T>>(new ValueContainer<T>(FoundReferenceContainer.Value.Value));
@@ -228,7 +228,7 @@ namespace CoreComponents.Data.Tables
             
             ReferenceValueContainer<ValueContainer<T>> ValueContainer = myCells[TheIndex];
 
-            if(ValueContainer.ValueIsNotNull)
+            if(ValueContainer.HasValue)
             {
 
                 return ValueContainer.Value;

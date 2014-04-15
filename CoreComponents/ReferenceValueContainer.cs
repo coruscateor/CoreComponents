@@ -18,25 +18,25 @@ namespace CoreComponents
         {
         }
 
-        public bool ValueIsNull
-        {
-
-            get
-            {
-
-                return myValue == null;
-
-            }
-
-        }
-
-        public bool ValueIsNotNull
+        public bool HasValue
         {
 
             get
             {
 
                 return myValue != null;
+
+            }
+
+        }
+
+        public bool HasNoValue
+        {
+
+            get
+            {
+
+                return myValue == null;
 
             }
 

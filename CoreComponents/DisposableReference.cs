@@ -5,7 +5,7 @@ using System.Text;
 namespace CoreComponents
 {
 
-    public struct TempReference<T> : IValueContainer<T>, IDisposable where T : class
+    public struct DisposableReference<T> : IValueContainer<T>, IDisposable where T : class
     {
 
         T myValue;
@@ -148,18 +148,24 @@ namespace CoreComponents
 
         }
 
-        public void Execute(Action<T> Delegate)
+        public bool TryExecute(Action<T> Delegate)
         {
 
-            if(myValue == null)
-                throw new Exception("Value must not be null");
-
-            using(this)
+            if(myValue != null)
             {
 
-                Delegate(myValue);
+                using(this)
+                {
+
+                    Delegate(myValue);
+
+                }
+
+                return true;
 
             }
+
+            return false;
 
         }
 

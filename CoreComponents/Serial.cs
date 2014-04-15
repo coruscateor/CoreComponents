@@ -1209,6 +1209,59 @@ namespace CoreComponents
 
         }
 
+        public static T Invoke<T>(Func<T> Func1, Func<T, T> Func2)
+        {
+
+             return Func2(Func1());
+
+        }
+
+        public static T Invoke<T>(Func<T> Func1, Func<T, T> Func2, Func<T, T> Func3)
+        {
+
+            return Func3(Func2(Func1()));
+
+        }
+
+        public static T Invoke<T>(Func<T> Func1, Func<T, T> Func2, Func<T, T> Func3, Func<T, T> Func4)
+        {
+
+            return Func4(Func3(Func2(Func1())));
+
+        }
+
+        public static T Invoke<T>(Func<T> Func1, IEnumerable<Func<T, T>> Funcs)
+        {
+
+            T Result = Func1();
+
+            foreach(var Item in Funcs)
+            {
+
+                Result = Item(Result);
+
+            }
+
+            return Result;
+
+        }
+
+        public static T InvokeParams<T>(Func<T> Func1, params Func<T, T>[] Funcs)
+        {
+
+            T Result = Func1();
+
+            for(long i = 0; i < Funcs.LongLength; ++i)
+            {
+
+                Result = Funcs[i](Result);
+
+            }
+
+            return Result;
+
+        }
+
     }
 
 }

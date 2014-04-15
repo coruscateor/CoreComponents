@@ -14,6 +14,8 @@ namespace CoreComponents.Threading
 
         protected SpinLock mySpinlock;
 
+        protected bool myUsesMemoryBarrier;
+
         public ConcurrentValueContainer()
         {
         }
@@ -22,6 +24,34 @@ namespace CoreComponents.Threading
         {
 
             myValue = TheValue;
+
+        }
+
+        public ConcurrentValueContainer(bool TheUsesMemoryBarrier)
+        {
+
+            myUsesMemoryBarrier = TheUsesMemoryBarrier;
+
+        }
+
+        public ConcurrentValueContainer(T TheValue, bool TheUsesMemoryBarrier)
+        {
+
+            myValue = TheValue;
+
+            myUsesMemoryBarrier = TheUsesMemoryBarrier;
+
+        }
+
+        public bool UsesMemoryBarrier
+        {
+
+            get
+            {
+
+                return myUsesMemoryBarrier;
+
+            }
 
         }
 
@@ -45,7 +75,7 @@ namespace CoreComponents.Threading
                 {
 
                     if(LockTaken)
-                        mySpinlock.Exit();
+                        mySpinlock.Exit(myUsesMemoryBarrier);
 
                 }
 
@@ -67,7 +97,7 @@ namespace CoreComponents.Threading
                 {
 
                     if (LockTaken)
-                        mySpinlock.Exit();
+                        mySpinlock.Exit(myUsesMemoryBarrier);
 
                 }
 

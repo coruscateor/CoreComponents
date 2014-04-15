@@ -52,6 +52,36 @@ namespace CoreComponents
 
         }
 
+        public bool HasNoValue
+        {
+
+            get
+            {
+
+                return myValue == null;
+
+            }
+
+        }
+
+        public bool TryGetValue(out object TheValue)
+        {
+
+            if(myValue != null)
+            {
+
+                TheValue = myValue;
+
+                return true;
+
+            }
+
+            TheValue = null;
+
+            return false;
+
+        }
+
     }
 
     public class ValueContainer<T> : IValueContainer<T>
