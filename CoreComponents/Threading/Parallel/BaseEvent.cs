@@ -125,6 +125,18 @@ namespace CoreComponents.Threading.Parallel
 
         }
 
+        public bool HasAddAction
+        {
+
+            get
+            {
+
+                return AddAction != null;
+
+            }
+
+        }
+
         public bool TryGetAddAction(out Action<T> TheAction)
         {
 
@@ -225,6 +237,18 @@ namespace CoreComponents.Threading.Parallel
                     myRemoveActionSpinLock.Exit();
 
                 }
+
+            }
+
+        }
+
+        public bool HasRemoveAction
+        {
+
+            get
+            {
+
+                return RemoveAction != null;
 
             }
 

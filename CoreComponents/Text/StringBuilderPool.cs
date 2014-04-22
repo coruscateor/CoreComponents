@@ -63,12 +63,45 @@ namespace CoreComponents.Text
                 while(SBCount > 0)
                 {
 
+                    if(myQueue.Count >= SBCount)
+                    {
+
+                        StringBuilder SB;
+
+                        if(!myQueue.TryDequeue(out SB))
+                            break;
+
+                        --SBCount;
+
+                    }
+                    else
+                    {
+
+                        break;
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        public static void Remove(int TheCount)
+        {
+
+            if(TheCount > 0)
+            {
+
+                while(TheCount > 0)
+                {
+
                     StringBuilder SB;
 
                     if(!myQueue.TryDequeue(out SB))
                         break;
 
-                    --SBCount;
+                    --TheCount;
 
                 }
 

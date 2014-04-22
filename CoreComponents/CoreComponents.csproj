@@ -51,6 +51,7 @@
     <Compile Include="ComposesAttribute.cs" />
     <Compile Include="DefaultValues.cs" />
     <Compile Include="FileSystem\RangeLock.cs" />
+    <Compile Include="ICloneWith.cs" />
     <Compile Include="InfrastructureAttribute.cs" />
     <Compile Include="Items\IHasCount.cs" />
     <Compile Include="Items\IHasLongCount.cs" />
@@ -76,6 +77,7 @@
     <Compile Include="Streaming\Streamer.cs" />
     <Compile Include="Text\IndentationLevelBuilder.cs" />
     <Compile Include="Text\IndentationType.cs" />
+    <Compile Include="Text\IToStringBuilder.cs" />
     <Compile Include="Text\SpaceExtender.cs" />
     <Compile Include="Text\SpaceIndentationLevelBuilder.cs" />
     <Compile Include="Text\StringBuilderPool.cs" />
@@ -97,9 +99,13 @@
     <Compile Include="Data\Tables\IColumn.cs" />
     <Compile Include="Data\Tables\Table.cs" />
     <Compile Include="Threading\AcquisitionQueue.cs" />
+    <Compile Include="Threading\ActiveWaitEvent.cs" />
+    <Compile Include="Threading\AsyncLockHog.cs" />
     <Compile Include="Threading\BigWaitCounter.cs" />
     <Compile Include="Threading\CannotWaitException.cs" />
+    <Compile Include="Threading\ConcurrentStringBuilder.cs" />
     <Compile Include="Threading\ConcurrentVisitingContainer.cs" />
+    <Compile Include="Threading\LockHog.cs" />
     <Compile Include="Threading\LongWaitCounter.cs" />
     <Compile Include="Threading\Parallel\ActionEventPair.cs" />
     <Compile Include="Threading\Parallel\EventPair.cs" />
@@ -177,6 +183,7 @@
     <Compile Include="Threading\TemporalReference.cs" />
     <Compile Include="Threading\ThreadSafeAttribute.cs" />
     <Compile Include="Threading\ThreadUnsafeAttribute.cs" />
+    <Compile Include="Threading\TieredConcurrentValueContainer.cs" />
     <Compile Include="Threading\TSTemporalReference.cs" />
     <Compile Include="Threading\WaitCounter.cs" />
     <Compile Include="Time\TimeConversions.cs" />
