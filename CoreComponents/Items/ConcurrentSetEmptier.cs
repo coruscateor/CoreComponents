@@ -7,10 +7,10 @@ using System.Text;
 namespace CoreComponents.Items
 {
 
-    public struct ConcurrentSetEmptier<T>
+    public static class ConcurrentSetEmptier<T>
     {
 
-        public void ClearAll(ConcurrentQueue<T> TheQueue)
+        public static void ClearAll(ConcurrentQueue<T> TheQueue)
         {
 
             if(!TheQueue.IsEmpty)
@@ -29,8 +29,8 @@ namespace CoreComponents.Items
             }
 
         }
-
-        public void ClearLimited(ConcurrentQueue<T> TheQueue)
+        
+        public static void ClearLimited(ConcurrentQueue<T> TheQueue)
         {
 
             int Count = TheQueue.Count;

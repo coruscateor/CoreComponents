@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CoreComponents
+namespace CoreComponents.Items.Nodes
 {
 
-    public interface ICloneable<out T> : ICloneable
+    public interface ITerminalNode
     {
 
-        new T Clone();
+
 
     }
 

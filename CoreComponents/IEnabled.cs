@@ -25,7 +25,7 @@ namespace CoreComponents
     public interface IEnabled<TInfo> : IEnabled
     {
 
-        event EventInfo<TInfo> Enabled;
+        new event EventInfo<TInfo> Enabled;
 
         event EventInfo<TInfo> Disabled;
 

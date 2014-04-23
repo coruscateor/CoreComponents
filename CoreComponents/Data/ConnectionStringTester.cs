@@ -11,7 +11,7 @@ namespace CoreComponents.Data
 
         public event Action<MessageEventArgs<ConnectionStringTester<TConnection>>> Success;
 
-        //public event Create<ErrorEventArgs<ConnectionStringTester<TConnection>>>.ADelegate Failure;
+        public event Action<ExceptionEventArgs<Exception>> Failure;
 
         public event Action<SenderEventArgs<ConnectionStringTester<TConnection>>> ConnectionStringChanged;
 
@@ -41,8 +41,8 @@ namespace CoreComponents.Data
         void OnFailure(Exception e)
         {
 
-            //if (Failure != null)
-            //    Failure(new ErrorEventArgs<ConnectionStringTester<TConnection>>(this, e));
+            if(Failure != null)
+                Failure(new ExceptionEventArgs<Exception>(this, e));
 
         }
 
