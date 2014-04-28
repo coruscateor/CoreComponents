@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using CoreComponents.Threading;
 
 namespace CoreComponents.Text
 {
@@ -24,12 +26,38 @@ namespace CoreComponents.Text
 
         }
 
+        public static void FetchOrCreateAsync(ConcurrentValueContainer<StringBuilder> TheSBContainer, ConcurrentValueContainer<bool> HasBeenSet)
+        {
+
+            ThreadPool.QueueUserWorkItem((TheState) =>
+            {
+
+                TheSBContainer.Value = FetchOrCreate();
+
+                HasBeenSet.Value = true;
+
+            });
+
+        }
+        
         public static void Put(StringBuilder TheSB)
         {
 
             TheSB.Clear();
 
             myQueue.Enqueue(TheSB);
+
+        }
+
+        public static void PutAsync(StringBuilder TheSB)
+        {
+
+            ThreadPool.QueueUserWorkItem((TheState) =>
+            {
+
+                Put(TheSB);
+
+            });
 
         }
 
@@ -49,6 +77,18 @@ namespace CoreComponents.Text
                 --SBCount;
 
             }
+
+        }
+
+        public static void ClearAsync()
+        {
+
+            ThreadPool.QueueUserWorkItem((TheState) =>
+            {
+
+                Clear();
+
+            });
 
         }
 
@@ -87,6 +127,18 @@ namespace CoreComponents.Text
 
         }
 
+        public static void ReduceToAsync(int TheCount)
+        {
+
+            ThreadPool.QueueUserWorkItem((TheState) =>
+            {
+
+                ReduceTo(TheCount);
+
+            });
+
+        }
+
         public static void Remove(int TheCount)
         {
 
@@ -109,6 +161,18 @@ namespace CoreComponents.Text
 
         }
 
+        public static void RemoveAsync(int TheCount)
+        {
+
+            ThreadPool.QueueUserWorkItem((TheState) =>
+            {
+
+                Remove(TheCount);
+
+            });
+
+        }
+
         public static void Execute(Action<StringBuilder> TheAction)
         {
 
@@ -126,6 +190,18 @@ namespace CoreComponents.Text
                 Put(SB);
 
             }
+
+        }
+
+        public static void ExecuteAsync(Action<StringBuilder> TheAction)
+        {
+
+            ThreadPool.QueueUserWorkItem((TheState) =>
+            {
+
+                Execute(TheAction);
+
+            });
 
         }
 

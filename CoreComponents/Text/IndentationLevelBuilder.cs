@@ -7,14 +7,12 @@ using System.Threading.Tasks;
 namespace CoreComponents.Text
 {
     
-    public class IndentationLevelBuilder : ReadonlyValueContainer<string>
+    public struct IndentationLevelBuilder
     {
 
-        public IndentationLevelBuilder() : base("")
-        {
-        }
+        string myValue;
         
-        public IndentationLevelBuilder(IndentationType TheIndentationType)
+        public IndentationLevelBuilder(IndentationType TheIndentationType = IndentationType.Space)
         {
 
             if(TheIndentationType == IndentationType.Space)
@@ -83,6 +81,13 @@ namespace CoreComponents.Text
                 return new IndentationLevelBuilder(this, IndentationType.Space);
 
             return new IndentationLevelBuilder(this, IndentationType.Tab);
+
+        }
+
+        public override string ToString()
+        {
+
+            return myValue;
 
         }
 

@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace CoreComponents.Text
 {
-
-    public interface IToStringBuilder
+    
+    public interface IAppend
     {
 
+        void Append(StringBuilder TheSB);
 
-
-        StringBuilder ToStringBuilder();
+        void Append(StringBuilder TheSB, TabIndentationLevelBuilder TheIndentation);
 
     }
 

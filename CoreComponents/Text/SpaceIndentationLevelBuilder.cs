@@ -7,11 +7,19 @@ using System.Threading.Tasks;
 namespace CoreComponents.Text
 {
 
-    public class SpaceIndentationLevelBuilder : ReadonlyValueContainer<string>
+    public struct SpaceIndentationLevelBuilder
     {
-        
-        public SpaceIndentationLevelBuilder() : base("")
+
+        string myValue;
+
+        public SpaceIndentationLevelBuilder(bool Start = false)
         {
+
+            if(Start)
+                myValue = " ";
+            else
+                myValue = "";
+
         }
 
         public SpaceIndentationLevelBuilder(SpaceIndentationLevelBuilder TheSpaceIndentationLevelBuilder)
@@ -33,10 +41,17 @@ namespace CoreComponents.Text
 
         }
 
-        public SpaceIndentationLevelBuilder AddSpace()
+        public SpaceIndentationLevelBuilder Add()
         {
 
             return new SpaceIndentationLevelBuilder(this);
+
+        }
+
+        public override string ToString()
+        {
+
+            return myValue;
 
         }
 

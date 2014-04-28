@@ -556,6 +556,174 @@ namespace CoreComponents.Threading
 
         }
 
+        public void AppendLine(bool TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(byte TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(char TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(char[] TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(decimal TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(double TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(float TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(int TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(long TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(object TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(sbyte TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(short TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
         public void AppendLine(string TheValue)
         {
 
@@ -568,6 +736,113 @@ namespace CoreComponents.Threading
 
         }
 
+        public void AppendLine(uint TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(ulong TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(ushort TheValue)
+        {
+
+            lock(myLockObject)
+            {
+
+                mySB.Append(TheValue);
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(IEnumerable<char> TheEnuerator)
+        {
+
+            lock(myLockObject)
+            {
+
+                foreach(var Item in TheEnuerator)
+                {
+
+                    mySB.Append(Item);
+
+                }
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(StringBuilder TheStringBuilder)
+        {
+
+            lock(myLockObject)
+            {
+
+                for(int i = 0; i < TheStringBuilder.Length; ++i)
+                {
+
+                    mySB.Append(TheStringBuilder[i]);
+
+                }
+
+                mySB.AppendLine();
+
+            }
+
+        }
+
+        public void AppendLine(ConcurrentStringBuilder TheStringBuilder)
+        {
+
+            if(TheStringBuilder == this)
+            {
+
+                TheStringBuilder.Append(ToArray());
+
+                return;
+
+            }
+
+            lock(myLockObject)
+            {
+
+                for(int i = 0; i < TheStringBuilder.Length; ++i)
+                {
+
+                    mySB.Append(TheStringBuilder[i]);
+
+                }
+
+                mySB.AppendLine();
+
+            }
+
+        }
 
         public void Clear()
         {

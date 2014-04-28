@@ -7,16 +7,21 @@ using System.Threading.Tasks;
 namespace CoreComponents.Text
 {
 
-    public class TabIndentationLevelBuilder : ReadonlyValueContainer<string>
+    public struct TabIndentationLevelBuilder
     {
 
-        public TabIndentationLevelBuilder()
+        string myValue;
+
+        public TabIndentationLevelBuilder(bool Start = false)
         {
 
-            myValue = "";
+            if(Start)
+                myValue = "\t";
+            else
+                myValue = "";
 
         }
-
+        
         public TabIndentationLevelBuilder(TabIndentationLevelBuilder TheTabIndentationLevelBuilder)
         {
 
@@ -36,10 +41,17 @@ namespace CoreComponents.Text
 
         }
 
-        public TabIndentationLevelBuilder AddTab()
+        public TabIndentationLevelBuilder Add()
         {
 
             return new TabIndentationLevelBuilder(this);
+
+        }
+
+        public override string ToString()
+        {
+
+            return myValue;
 
         }
 
