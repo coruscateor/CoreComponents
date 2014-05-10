@@ -7,7 +7,7 @@ using CoreComponents.Text;
 namespace CoreComponents.W3Etc
 {
 
-    public class SingleTagElement : BaseElement, IAppend
+    public class SingleTagElement : BaseElement, IAppendTo
     {
 
         protected bool myTerminate;
@@ -66,7 +66,7 @@ namespace CoreComponents.W3Etc
 
         }
 
-        public void Append(StringBuilder TheSB)
+        public void AppendTo(StringBuilder TheSB)
         {
 
             Start(TheSB);
@@ -77,12 +77,12 @@ namespace CoreComponents.W3Etc
 
         }
 
-        public void Append(StringBuilder TheSB, TabIndentationLevelBuilder TheIndentation)
+        public void AppendTo(StringBuilder TheSB, TabIndentationLevelBuilder TheIndentation)
         {
 
             TheSB.Append(TheIndentation);
 
-            Append(TheSB);
+            AppendTo(TheSB);
 
         }
 
@@ -91,7 +91,7 @@ namespace CoreComponents.W3Etc
 
             StringBuilder SB = StringBuilderPool.FetchOrCreate();
 
-            Append(SB);
+            AppendTo(SB);
 
             string Result = SB.ToString();
 

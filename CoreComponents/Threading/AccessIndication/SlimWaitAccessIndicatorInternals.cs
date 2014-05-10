@@ -13,8 +13,6 @@ namespace CoreComponents.Threading.AccessIndication
         protected SemaphoreSlim mySemaphoreSlim;
 
         protected int myCurrentCount = -1;
-        
-        protected SpinLock mySpinLock;
 
         public SlimWaitAccessIndicatorInternals()
         {

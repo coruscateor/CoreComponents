@@ -9,7 +9,7 @@ namespace CoreComponents
     public interface IHasName : IReadonlyHaveName
     {
 
-        string Name
+        new string Name
         {
 
             get;

@@ -8,7 +8,7 @@ using CoreComponents.Text;
 namespace CoreComponents.W3Etc
 {
     
-    public class Rule : DynamicObject, IAppend
+    public class Rule : DynamicObject, IAppendTo
     {
 
         protected List<object> mySelectors = new List<object>();
@@ -95,14 +95,14 @@ namespace CoreComponents.W3Etc
 
         }
 
-        public void Append(StringBuilder TheSB)
+        public void AppendTo(StringBuilder TheSB)
         {
 
-            Append(TheSB, new TabIndentationLevelBuilder());
+            AppendTo(TheSB, new TabIndentationLevelBuilder());
 
         }
 
-        public void Append(StringBuilder TheSB, TabIndentationLevelBuilder TheIndentation)
+        public void AppendTo(StringBuilder TheSB, TabIndentationLevelBuilder TheIndentation)
         {
 
             TheSB.Append(TheIndentation);
@@ -188,10 +188,10 @@ namespace CoreComponents.W3Etc
         protected void AppendItem(object TheItem, StringBuilder TheSB)
         {
 
-            if(TheItem is IAppend)
+            if(TheItem is IAppendTo)
             {
 
-                ((IAppend)TheItem).Append(TheSB);
+                ((IAppendTo)TheItem).AppendTo(TheSB);
 
             }
             else
@@ -208,7 +208,7 @@ namespace CoreComponents.W3Etc
 
             StringBuilder SB = StringBuilderPool.FetchOrCreate();
 
-            Append(SB);
+            AppendTo(SB);
 
             string Result = SB.ToString();
 

@@ -9,13 +9,13 @@ namespace CoreComponents.Text.Documents
     public class TextDocumentLineSet : ITextDocumentLineSet
     {
 
-        public event EventInfo<TextDocumentLine> Added;
+        //public event EventInfo<TextDocumentLine> Added;
 
-        public event EventInfo<IndexedDocumentItemEvent<TextDocumentLine>> Inserted;
+        //public event EventInfo<IndexedDocumentItemEvent<TextDocumentLine>> Inserted;
 
-        public event EventInfo<TextDocumentLine> Removed;
+        //public event EventInfo<TextDocumentLine> Removed;
 
-        public event EventInfo<IndexedDocumentItemEvent<TextDocumentLine>> RemovedAt;
+        //public event EventInfo<IndexedDocumentItemEvent<TextDocumentLine>> RemovedAt;
 
         protected ITextDocument myDocument;
 

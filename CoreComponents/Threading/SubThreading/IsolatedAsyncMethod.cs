@@ -32,6 +32,8 @@ namespace CoreComponents.Threading.SubThreading
 
             myOutputQueueContainer = new ConcurrentOutputQueueContainer<object>(OutputQueue);
 
+            myReadOnlyState = new ConcurrentReadOnlyState<string, object>(new ConcurrentDictionary<string, object>());
+
         }
 
         protected IAsynchronousInputOutput<object, object> ThreadIO

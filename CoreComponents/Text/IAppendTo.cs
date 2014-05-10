@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace CoreComponents.Text
 {
-
-    public interface IToStringBuilder
+    
+    public interface IAppendTo
     {
 
-        StringBuilder ToStringBuilder();
+        void AppendTo(StringBuilder TheSB);
 
     }
 

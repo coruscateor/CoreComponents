@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using CoreComponents.Text;
 
 namespace CoreComponents
 {
 
-    public struct Octet : ICloneable<Octet>, IToArray<bool>, IAppendToStringBuilder, IEnumerable<bool>
+    public struct Octet : ICloneable<Octet>, IToArray<bool>, IAppendTo, IEnumerable<bool>
     {
         
         bool myFirstBit;

@@ -20,15 +20,15 @@ namespace CoreComponents.Text.Documents
 
         public event EventInfo<IndexedDocumentItemEvent<char>> RemovedAt;
 
-        public event EventInfo<IEnumerable<char>> AddedSet;
+        //public event EventInfo<IEnumerable<char>> AddedSet;
 
         public event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedSet;
 
-        public event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedOverSet;
+        //public event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedOverSet;
 
         public event EventInfo<IEnumerable<char>> RemovedSet;
 
-        public event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> RemovedAtSet;
+        //public event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> RemovedAtSet;
 
         protected List<char> myList = new List<char>();
 

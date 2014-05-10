@@ -9,7 +9,7 @@ namespace CoreComponents.Threading
     public interface IAsynchronousInputOutputWithState : IAsynchronousInputOutput, IHasState
     {
 
-        IState<string, object> State
+        new IState<string, object> State
         {
 
             get;
@@ -21,7 +21,7 @@ namespace CoreComponents.Threading
     public interface IAsynchronousInputOutputWithState<TInput, TOutput> : IAsynchronousInputOutput<TInput, TOutput>, IHasState
     {
 
-        IState<string, object> State
+        new IState<string, object> State
         {
 
             get;

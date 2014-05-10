@@ -7,7 +7,7 @@ using CoreComponents.Text;
 namespace CoreComponents.W3Etc
 {
     
-    public class XComment : IAppend
+    public class XComment : IAppendTo
     {
 
         protected string myValue;
@@ -53,7 +53,7 @@ namespace CoreComponents.W3Etc
 
         }
 
-        public void Append(StringBuilder TheSB)
+        public void AppendTo(StringBuilder TheSB)
         {
 
             TheSB.Append("<--");
@@ -64,15 +64,15 @@ namespace CoreComponents.W3Etc
 
         }
 
-        public void Append(StringBuilder TheSB, TabIndentationLevelBuilder TheIndentation)
+        public void AppendTo(StringBuilder TheSB, TabIndentationLevelBuilder TheIndentation)
         {
 
             TheSB.Append(TheIndentation.Value);
 
-            Append(TheSB);
+            AppendTo(TheSB);
 
         }
-
+        
     }
 
 }

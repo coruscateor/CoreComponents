@@ -20,15 +20,15 @@ namespace CoreComponents.Text.Documents
 
         event EventInfo<IndexedDocumentItemEvent<char>> RemovedAt;
 
-        event EventInfo<IEnumerable<char>> AddedSet;
+        //event EventInfo<IEnumerable<char>> AddedSet;
 
-        event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedSet;
+        //event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedSet;
 
-        event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedOverSet;
+        //event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedOverSet;
 
         event EventInfo<IEnumerable<char>> RemovedSet;
 
-        event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> RemovedAtSet;
+        //event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> RemovedAtSet;
 
         void Insert(int index, IEnumerable<char> item);
 

@@ -170,26 +170,24 @@ namespace CoreComponents.W3Etc
         public void ToStringBuilder(StringBuilder TheSB)
         {
 
-            TabIndentationLevelBuilder FirstLevel = new TabIndentationLevelBuilder();
-
             foreach(var Item in myItems)
             {
 
-                if(Item is IAppend)
+                if(Item is IAppendTo)
                 {
 
-                    ((IAppend)Item).Append(TheSB);
+                    ((IAppendTo)Item).AppendTo(TheSB);
 
                 }
-                else if(Item is IEnumerable<IAppend>)
+                else if(Item is IEnumerable<IAppendTo>)
                 {
 
-                    IEnumerable<IAppend> Items = (IEnumerable<IAppend>)Item;
+                    IEnumerable<IAppendTo> Items = (IEnumerable<IAppendTo>)Item;
 
                     foreach(var Item1 in Items)
                     {
 
-                        Item1.Append(TheSB);
+                        Item1.AppendTo(TheSB);
 
                     }
 

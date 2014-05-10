@@ -8,7 +8,7 @@ using CoreComponents.Text;
 namespace CoreComponents.W3Etc
 {
 
-    public class MultiTagElement : BaseElement, IAppend
+    public class MultiTagElement : BaseElement, IAppendTo
     {
 
         protected object myContents;
@@ -154,18 +154,18 @@ namespace CoreComponents.W3Etc
 
             TheSB.Append(TheIndentation);
 
-            Append(TheSB);
+            AppendTo(TheSB);
 
         }
 
-        public void Append(StringBuilder TheSB)
+        public void AppendTo(StringBuilder TheSB)
         {
 
-            Append(TheSB, new TabIndentationLevelBuilder());
+            AppendTo(TheSB, new TabIndentationLevelBuilder());
 
         }
 
-        public void Append(StringBuilder TheSB, TabIndentationLevelBuilder TheIndentation)
+        public void AppendTo(StringBuilder TheSB, TabIndentationLevelBuilder TheIndentation)
         {
 
             TheSB.Append(TheIndentation);
@@ -179,23 +179,29 @@ namespace CoreComponents.W3Etc
             if(myContents != null)
             {
 
-                if(myContents is IAppend)
+                if(myContents is IAppendTo)
                 {
 
-                    ((IAppend)myContents).Append(TheSB, TheIndentation.Add());
+                    ((IAppendTo)myContents).AppendTo(TheSB);
 
                 }
-                else if(myContents is IEnumerable<IAppend>)
+                if(myContents is IAppendToWithIndentation)
                 {
 
-                    IEnumerable<IAppend> Items = (IEnumerable<IAppend>)myContents;
+                    ((IAppendToWithIndentation)myContents).AppendTo(TheSB, TheIndentation.Add());
+
+                }
+                else if(myContents is IEnumerable<IAppendToWithIndentation>)
+                {
+
+                    IEnumerable<IAppendToWithIndentation> Items = (IEnumerable<IAppendToWithIndentation>)myContents;
 
                     TabIndentationLevelBuilder Next = TheIndentation.Add();
 
                     foreach(var Item in Items)
                     {
 
-                        Item.Append(TheSB, Next);
+                        Item.AppendTo(TheSB, Next);
 
                     }
 
@@ -210,10 +216,10 @@ namespace CoreComponents.W3Etc
                     foreach(var Item in Items)
                     {
 
-                        if(Item is IAppend)
+                        if(Item is IAppendToWithIndentation)
                         {
 
-                            ((IAppend)Item).Append(TheSB, Next);
+                            ((IAppendToWithIndentation)Item).AppendTo(TheSB, Next);
 
                         }
                         else
@@ -271,7 +277,7 @@ namespace CoreComponents.W3Etc
 
             StringBuilder SB = StringBuilderPool.FetchOrCreate();
 
-            Append(SB);
+            AppendTo(SB);
 
             string Result = SB.ToString();
 

@@ -11,8 +11,6 @@ namespace CoreComponents.Threading
 
         void Clear();
         
-        bool ContainsKey(TKey key);
-        
         //TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory);
         
         //TValue GetOrAdd(TKey key, TValue value);

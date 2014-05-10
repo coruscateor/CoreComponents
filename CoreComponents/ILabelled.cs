@@ -9,7 +9,7 @@ namespace CoreComponents
     public interface ILabelled : IReadonlyLabelled
     {
 
-        string Label
+        new string Label
         {
 
             get;

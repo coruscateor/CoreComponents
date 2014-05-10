@@ -29,14 +29,14 @@ namespace CoreComponents.Threading.Jobs
     public interface IJobIO<TJob> : IJobIO where TJob : IJob
     {
 
-        IInputOutputQueue<TJob> Waiting
+        new IInputOutputQueue<TJob> Waiting
         {
 
             get;
 
         }
 
-        IInputOutputQueue<TJob> Ended
+        new IInputOutputQueue<TJob> Ended
         {
 
             get;

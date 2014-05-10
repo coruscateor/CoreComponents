@@ -7,7 +7,7 @@ using System.Text;
 namespace CoreComponents.Threading.SubThreading.Work
 {
 
-    [ConstructorRequires(typeof(IWorkContainer))]
+    //[ConstructorRequires(typeof(IWorkContainer))]
     public class IsolatedTaskExecutor : IsolatedTask, IIsolatedWorkExecutor
     {
 

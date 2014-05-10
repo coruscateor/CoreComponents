@@ -65,7 +65,7 @@ namespace CoreComponents
 
         }
 
-        public dynamic Dynamic
+        public dynamic X
         {
 
             get

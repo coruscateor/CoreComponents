@@ -9,7 +9,7 @@ namespace CoreComponents
     public interface IHasText : IReadonlyHaveText
     {
 
-        string Text
+        new string Text
         {
 
             get;

@@ -236,6 +236,23 @@ namespace CoreComponents
 
         }
 
+        public override bool Equals(object obj)
+        {
+
+            if(obj is Percentage)
+                return ((Percentage)obj) == this;
+
+            return base.Equals(obj);
+
+        }
+
+        public override int GetHashCode()
+        {
+
+            return base.GetHashCode();
+
+        }
+
         public override string ToString()
         {
 

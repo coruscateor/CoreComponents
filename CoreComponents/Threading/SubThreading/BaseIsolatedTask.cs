@@ -23,7 +23,7 @@ namespace CoreComponents.Threading.SubThreading
 
         //private Dictionary<Task, object> myContinuationQueueStateIndex;
 
-        private object myState;
+        private object myAsyncState;
 
         private object myNextState;
 
@@ -160,7 +160,7 @@ namespace CoreComponents.Threading.SubThreading
                     Thread.MemoryBarrier();
 
                     if (myCurrentTask.AsyncState != null)
-                        myState = myCurrentTask.AsyncState;
+                        myAsyncState = myCurrentTask.AsyncState;
                     //else if (myState != null)
                     //    myState = null;
 
@@ -244,15 +244,15 @@ namespace CoreComponents.Threading.SubThreading
                     if(myNextTask != null)
                     {
 
-                        myState = myNextState;
+                        myAsyncState = myNextState;
 
                         myNextState = null;
 
                     }
-                    else if(myState != null)
+                    else if(myAsyncState != null)
                     {
 
-                        myState = null;
+                        myAsyncState = null;
 
                     }
 
@@ -262,8 +262,8 @@ namespace CoreComponents.Threading.SubThreading
                 else
                 {
 
-                    if(myState == null)
-                        myState = null;
+                    if(myAsyncState == null)
+                        myAsyncState = null;
 
                     if(myNextState == null)
                         myNextState = null;
@@ -410,13 +410,13 @@ namespace CoreComponents.Threading.SubThreading
 
         //}
 
-        protected object State
+        protected object AsyncState
         {
 
             get
             {
 
-                return myState;
+                return myAsyncState;
 
             }
 
@@ -428,7 +428,7 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                return myState != null;
+                return myAsyncState != null;
 
             }
 
@@ -437,8 +437,8 @@ namespace CoreComponents.Threading.SubThreading
         protected void FetchState(Action<object> StateFoundAction)
         {
 
-            if (myState != null)
-                StateFoundAction(myState);
+            if(myAsyncState != null)
+                StateFoundAction(myAsyncState);
 
         }
 

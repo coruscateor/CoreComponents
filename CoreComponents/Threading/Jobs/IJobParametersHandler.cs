@@ -21,7 +21,7 @@ namespace CoreComponents.Threading.Jobs
     public interface IJobParametersHandler<TJob> : IJobParametersHandler where TJob : IJob 
     {
 
-        TJob JobHandler
+        new TJob JobHandler
         {
 
             get;

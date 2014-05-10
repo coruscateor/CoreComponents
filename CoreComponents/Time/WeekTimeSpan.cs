@@ -134,6 +134,23 @@ namespace CoreComponents.Time
 
         }
 
+        public override bool Equals(object obj)
+        {
+
+            if(obj is WeekTimeSpan)
+                return ((WeekTimeSpan)obj) == this;
+
+            return base.Equals(obj);
+
+        }
+
+        public override int GetHashCode()
+        {
+
+            return base.GetHashCode();
+
+        }
+
     }
 
 }

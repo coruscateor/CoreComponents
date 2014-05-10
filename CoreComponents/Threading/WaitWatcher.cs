@@ -181,18 +181,26 @@ namespace CoreComponents.Threading
                 myAutoResetEvent.WaitOne();
 
             }
-            catch(ObjectDisposedException ODE)
+            catch
             {
 
                 ReInitaliseAutoResetEvent();
 
-            }
-            catch(NullReferenceException NRE)
-            {
-
-                ReInitaliseAutoResetEvent();
+                throw;
 
             }
+            //catch(ObjectDisposedException ODE)
+            //{
+
+            //    ReInitaliseAutoResetEvent();
+
+            //}
+            //catch(NullReferenceException NRE)
+            //{
+
+            //    ReInitaliseAutoResetEvent();
+
+            //}
             finally
             {
 
@@ -245,18 +253,26 @@ namespace CoreComponents.Threading
                 myAutoResetEvent.WaitOne(millisecondsTimeout);
 
             }
-            catch(ObjectDisposedException ODE)
+            catch
             {
 
                 ReInitaliseAutoResetEvent();
 
-            }
-            catch(NullReferenceException NRE)
-            {
-
-                ReInitaliseAutoResetEvent();
+                throw;
 
             }
+            //catch(ObjectDisposedException ODE)
+            //{
+
+            //    ReInitaliseAutoResetEvent();
+
+            //}
+            //catch(NullReferenceException NRE)
+            //{
+
+            //    ReInitaliseAutoResetEvent();
+
+            //}
             finally
             {
 
@@ -309,18 +325,26 @@ namespace CoreComponents.Threading
                 myAutoResetEvent.WaitOne(timeout);
 
             }
-            catch(ObjectDisposedException ODE)
+            catch
             {
 
                 ReInitaliseAutoResetEvent();
 
-            }
-            catch(NullReferenceException NRE)
-            {
-
-                ReInitaliseAutoResetEvent();
+                throw;
 
             }
+            //catch(ObjectDisposedException ODE)
+            //{
+
+            //    ReInitaliseAutoResetEvent();
+
+            //}
+            //catch(NullReferenceException NRE)
+            //{
+
+            //    ReInitaliseAutoResetEvent();
+
+            //}
             finally
             {
 
@@ -373,18 +397,26 @@ namespace CoreComponents.Threading
                 myAutoResetEvent.WaitOne(millisecondsTimeout, exitContext);
 
             }
-            catch(ObjectDisposedException ODE)
+            catch
             {
 
                 ReInitaliseAutoResetEvent();
 
-            }
-            catch(NullReferenceException NRE)
-            {
-
-                ReInitaliseAutoResetEvent();
+                throw;
 
             }
+            //catch(ObjectDisposedException ODE)
+            //{
+
+            //    ReInitaliseAutoResetEvent();
+
+            //}
+            //catch(NullReferenceException NRE)
+            //{
+
+            //    ReInitaliseAutoResetEvent();
+
+            //}
             finally
             {
 
@@ -437,18 +469,26 @@ namespace CoreComponents.Threading
                 myAutoResetEvent.WaitOne(timeout, exitContext);
 
             }
-            catch(ObjectDisposedException ODE)
+            catch
             {
 
                 ReInitaliseAutoResetEvent();
 
-            }
-            catch(NullReferenceException NRE)
-            {
-
-                ReInitaliseAutoResetEvent();
+                throw;
 
             }
+            //catch(ObjectDisposedException ODE)
+            //{
+
+            //    ReInitaliseAutoResetEvent();
+
+            //}
+            //catch(NullReferenceException NRE)
+            //{
+
+            //    ReInitaliseAutoResetEvent();
+
+            //}
             finally
             {
 

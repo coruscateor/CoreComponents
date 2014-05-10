@@ -169,7 +169,7 @@ namespace CoreComponents.W3Etc
             foreach(var Item in myRules)
             {
 
-                Item.Append(TheSB, FirstLevel);
+                Item.AppendTo(TheSB, FirstLevel);
 
             }
 

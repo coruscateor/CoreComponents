@@ -9,7 +9,7 @@ namespace CoreComponents
     public interface IValueContainer : IReadonlyValueContainer
     {
 
-        object Value
+        new object Value
         {
 
             get;
@@ -22,7 +22,7 @@ namespace CoreComponents
     public interface IValueContainer<T> : IReadonlyValueContainer<T>
     {
 
-        T Value
+        new T Value
         {
 
             get;
