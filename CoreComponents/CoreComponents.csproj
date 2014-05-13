@@ -61,6 +61,7 @@
     <Compile Include="Items\IListContainer.cs" />
     <Compile Include="Items\IListSource.cs" />
     <Compile Include="Items\ListContainer.cs" />
+    <Compile Include="Items\UniqueItemList.cs" />
     <Compile Include="Notifications\MethodSignature.cs" />
     <Compile Include="Notifications\SelectiveNotifier.cs" />
     <Compile Include="NullTolerantAttribute.cs" />

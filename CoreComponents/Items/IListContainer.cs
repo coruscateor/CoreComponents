@@ -14,7 +14,7 @@ namespace CoreComponents.Items
 
         void Insert(int index, T item);
 
-        public T this[int index]
+        T this[int index]
         {
 
             get;

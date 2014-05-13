@@ -14,7 +14,7 @@ namespace CoreComponents
 
         protected T myItem;
 
-        protected dynamic myDynamic;
+        protected dynamic myX;
 
         public DynamicAndNot()
         {
@@ -38,7 +38,7 @@ namespace CoreComponents
 
             myItem = TheItem;
 
-            myDynamic = TheItem;
+            myX = TheItem;
 
         }
 
@@ -59,7 +59,7 @@ namespace CoreComponents
 
                 myItem = value;
 
-                myDynamic = value;
+                myX = value;
 
             }
 
@@ -71,7 +71,7 @@ namespace CoreComponents
             get
             {
 
-                return myDynamic;
+                return myX;
 
             }
 
@@ -82,7 +82,7 @@ namespace CoreComponents
 
             myItem = Activator.CreateInstance<T>();
 
-            myDynamic = myItem;
+            myX = myItem;
 
         }
 
@@ -91,7 +91,7 @@ namespace CoreComponents
             
             myItem = (T)Activator.CreateInstance(typeof(T), TheParameters);
 
-            myDynamic = myItem;
+            myX = myItem;
 
         }
 
