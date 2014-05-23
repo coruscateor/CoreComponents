@@ -7,7 +7,7 @@ using System.Threading;
 namespace CoreComponents.Threading
 {
 
-    public class ConcurrentValueContainer<T> : IValueContainer<T>
+    public class SpinValueContainer<T> : IValueContainer<T>
     {
 
         protected T myValue;
@@ -16,25 +16,25 @@ namespace CoreComponents.Threading
 
         protected bool myUsesMemoryBarrier;
 
-        public ConcurrentValueContainer()
+        public SpinValueContainer()
         {
         }
 
-        public ConcurrentValueContainer(T TheValue)
+        public SpinValueContainer(T TheValue)
         {
 
             myValue = TheValue;
 
         }
 
-        public ConcurrentValueContainer(bool TheUsesMemoryBarrier)
+        public SpinValueContainer(bool TheUsesMemoryBarrier)
         {
 
             myUsesMemoryBarrier = TheUsesMemoryBarrier;
 
         }
 
-        public ConcurrentValueContainer(T TheValue, bool TheUsesMemoryBarrier)
+        public SpinValueContainer(T TheValue, bool TheUsesMemoryBarrier)
         {
 
             myValue = TheValue;

@@ -6,8 +6,8 @@ using System.Threading;
 
 namespace CoreComponents.Threading
 {
-    
-    public class ConcurrentVisitingContainer<T> : ConcurrentValueContainer<T>, IDisposable
+
+    public class SpinVisitingContainer<T> : SpinValueContainer<T>, IDisposable
     {
 
         protected bool myHasBeenSet;
@@ -16,19 +16,20 @@ namespace CoreComponents.Threading
 
         protected ManualResetEventSlim myManualResetEvent = new ManualResetEventSlim();
 
-        public ConcurrentVisitingContainer()
+        public SpinVisitingContainer()
         {
         }
 
-        public ConcurrentVisitingContainer(T TheValue) : base(TheValue)
+        public SpinVisitingContainer(T TheValue) : base(TheValue)
         {
         }
 
-        public ConcurrentVisitingContainer(bool UsesMemoryBarrier) : base(UsesMemoryBarrier)
+        public SpinVisitingContainer(bool UsesMemoryBarrier) : base(UsesMemoryBarrier)
         {
         }
 
-        public ConcurrentVisitingContainer(T TheValue, bool UsesMemoryBarrier) : base(TheValue, UsesMemoryBarrier)
+        public SpinVisitingContainer(T TheValue, bool UsesMemoryBarrier)
+            : base(TheValue, UsesMemoryBarrier)
         {
         }
 

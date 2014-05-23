@@ -6,14 +6,14 @@ using System.Text;
 namespace CoreComponents.Threading
 {
 
-    public abstract class BaseLockingQueueContainer<T> : IItemSet
+    public abstract class BaseMonitorQueueContainer<T> : IItemSet
     {
 
         protected object myLockObject;
 
         protected Queue<T> myQueue; //= new Queue<T>();
 
-        public BaseLockingQueueContainer(Queue<T> TheQueue, object TheLockObject)
+        public BaseMonitorQueueContainer(Queue<T> TheQueue, object TheLockObject)
         {
 
             myQueue = TheQueue;

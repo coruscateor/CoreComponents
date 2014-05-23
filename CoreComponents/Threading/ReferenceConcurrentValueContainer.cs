@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace CoreComponents.Threading
 {
     
-    public class ReferenceConcurrentValueContainer<T> : ConcurrentValueContainer<T> where T : class
+    public class ReferenceConcurrentValueContainer<T> : SpinValueContainer<T> where T : class
     {
 
         public ReferenceConcurrentValueContainer()

@@ -6,7 +6,7 @@ using System.Text;
 namespace CoreComponents.Threading
 {
 
-    public class LockingAsynchronousInputOutput<TInput, TOutput> : IAsynchronousInputOutput<TInput, TOutput>
+    public class MonitorAsynchronousInputOutput<TInput, TOutput> : IAsynchronousInputOutput<TInput, TOutput>
     {
 
         //private Queue<object> myInputQueue;
@@ -21,11 +21,11 @@ namespace CoreComponents.Threading
 
         //private object myStateLockObject;
 
-        private LockingQueueContainer<TInput> myLockingInputQueue;
+        private MonitorQueueContainer<TInput> myLockingInputQueue;
 
-        private LockingQueueContainer<TOutput> myLockingOutputQueue;
+        private MonitorQueueContainer<TOutput> myLockingOutputQueue;
         
-        private LockingState<string, object> myState;
+        private MonitorState<string, object> myState;
 
         //private LockingReadOnlyState<string, object> myReadOnlyState;
 
@@ -60,7 +60,7 @@ namespace CoreComponents.Threading
 
         //}
 
-        public LockingAsynchronousInputOutput(Queue<TInput> TheInputQueue, object TheInputLockObject, Queue<TOutput> TheOutputQueue, object TheOutputLockObject, Dictionary<string, object> TheDictionary, object TheDictionaryLockObject)
+        public MonitorAsynchronousInputOutput(Queue<TInput> TheInputQueue, object TheInputLockObject, Queue<TOutput> TheOutputQueue, object TheOutputLockObject, Dictionary<string, object> TheDictionary, object TheDictionaryLockObject)
         {
 
             //myInputLockObject = new object();
@@ -75,11 +75,11 @@ namespace CoreComponents.Threading
 
             //myDictionary = new Dictionary<string, object>();
 
-            myLockingInputQueue = new LockingQueueContainer<TInput>(TheInputQueue, TheInputLockObject);
+            myLockingInputQueue = new MonitorQueueContainer<TInput>(TheInputQueue, TheInputLockObject);
 
-            myLockingOutputQueue = new LockingQueueContainer<TOutput>(TheOutputQueue, TheOutputLockObject);
+            myLockingOutputQueue = new MonitorQueueContainer<TOutput>(TheOutputQueue, TheOutputLockObject);
 
-            myState = new LockingState<string, object>(TheDictionary, TheDictionaryLockObject);
+            myState = new MonitorState<string, object>(TheDictionary, TheDictionaryLockObject);
 
             //myStateLockObject = new LockingState<string, object>(myDictionary, myStateLockObject);
 

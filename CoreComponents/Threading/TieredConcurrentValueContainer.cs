@@ -7,7 +7,7 @@ using System.Threading;
 namespace CoreComponents.Threading
 {
 
-    public class TieredConcurrentValueContainer<T> : ConcurrentValueContainer<T>
+    public class TieredConcurrentValueContainer<T> : SpinValueContainer<T>
     {
 
         protected object myLockObject;

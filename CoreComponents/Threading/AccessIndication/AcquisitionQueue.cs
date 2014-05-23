@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace CoreComponents.Threading
+namespace CoreComponents.Threading.AccessIndication
 {
 
-    //Say you want access to a resource bot you don't want to wait for it.
+    //Say you want access to a resource but you don't want to wait for it.
 
     //You would rather have your thread doing things rather than sleeping.
 

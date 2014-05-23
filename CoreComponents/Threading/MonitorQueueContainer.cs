@@ -6,14 +6,14 @@ using System.Text;
 namespace CoreComponents.Threading
 {
 
-    public class LockingQueueContainer<T> : IInputOutputQueue<T>
+    public class MonitorQueueContainer<T> : IInputOutputQueue<T>
     {
 
         protected object myLockObject;
 
         protected Queue<T> myQueue;
 
-        public LockingQueueContainer(Queue<T> TheQueue, object TheLockObject)
+        public MonitorQueueContainer(Queue<T> TheQueue, object TheLockObject)
         {
 
             myQueue = TheQueue;

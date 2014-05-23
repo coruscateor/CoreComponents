@@ -342,7 +342,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public static ConcurrentQueue<T> Create(ConcurrentValueContainer<bool> Continue, uint CheckingRegularity = 10)
+        public static ConcurrentQueue<T> Create(SpinValueContainer<bool> Continue, uint CheckingRegularity = 10)
         {
 
             ConcurrentQueue<T> NewQueue = new ConcurrentQueue<T>();
@@ -396,7 +396,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public static void CreateInto(ConcurrentValueContainer<bool> Continue, ConcurrentQueue<T> TheQueue, uint CheckingRegularity = 10)
+        public static void CreateInto(SpinValueContainer<bool> Continue, ConcurrentQueue<T> TheQueue, uint CheckingRegularity = 10)
         {
             
             if(CheckingRegularity > 0)
@@ -446,7 +446,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public static void CreateInto(ConcurrentValueContainer<bool> Continue, IInputQueue<T> TheQueue, uint CheckingRegularity = 10)
+        public static void CreateInto(SpinValueContainer<bool> Continue, IInputQueue<T> TheQueue, uint CheckingRegularity = 10)
         {
 
             if(CheckingRegularity > 0)
@@ -496,7 +496,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public static ConcurrentQueue<T> CreatePerpetually(ConcurrentValueContainer<bool> Continue, Func<T> TheCreationFunc, uint CheckingRegularity = 10)
+        public static ConcurrentQueue<T> CreatePerpetually(SpinValueContainer<bool> Continue, Func<T> TheCreationFunc, uint CheckingRegularity = 10)
         {
 
             ConcurrentQueue<T> NewQueue = new ConcurrentQueue<T>();
@@ -550,7 +550,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public static void CreateIntoPerpetually(ConcurrentValueContainer<bool> Continue, ConcurrentQueue<T> TheQueue, Func<T> TheCreationFunc, uint CheckingRegularity = 10)
+        public static void CreateIntoPerpetually(SpinValueContainer<bool> Continue, ConcurrentQueue<T> TheQueue, Func<T> TheCreationFunc, uint CheckingRegularity = 10)
         {
 
             if(CheckingRegularity > 0)
@@ -600,7 +600,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public static void CreateIntoPerpetually(ConcurrentValueContainer<bool> Continue, IInputQueue<T> TheQueue, Func<T> TheCreationFunc, uint CheckingRegularity = 10)
+        public static void CreateIntoPerpetually(SpinValueContainer<bool> Continue, IInputQueue<T> TheQueue, Func<T> TheCreationFunc, uint CheckingRegularity = 10)
         {
 
             if(CheckingRegularity > 0)
@@ -650,7 +650,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public static void CreateInto(ConcurrentValueContainer<bool> Continue, IInputOutputQueue<T> TheQueue, Func<T> TheCreationFunc, uint CheckingRegularity = 10)
+        public static void CreateInto(SpinValueContainer<bool> Continue, IInputOutputQueue<T> TheQueue, Func<T> TheCreationFunc, uint CheckingRegularity = 10)
         {
 
             if(CheckingRegularity > 0)

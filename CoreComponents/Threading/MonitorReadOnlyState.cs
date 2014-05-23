@@ -6,14 +6,14 @@ using System.Text;
 namespace CoreComponents.Threading
 {
 
-    public class LockingReadOnlyState<TKey, TValue> : IReadOnlyState<TKey, TValue>
+    public class MonitorReadOnlyState<TKey, TValue> : IReadOnlyState<TKey, TValue>
     {
 
         protected object myLockObject;
 
         protected IDictionary<TKey, TValue> myDictionary;
 
-        public LockingReadOnlyState(IDictionary<TKey, TValue> TheDictionary, object TheLockObject)
+        public MonitorReadOnlyState(IDictionary<TKey, TValue> TheDictionary, object TheLockObject)
         {
 
             myDictionary = TheDictionary;

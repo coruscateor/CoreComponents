@@ -9,9 +9,9 @@ namespace CoreComponents.Threading
     public class FencedReadonlyFacade<T> : IReadonlyValueContainer<T>
     {
 
-        protected FencedContainer<T> myValueContainer;
+        protected FencedValueContainer<T> myValueContainer;
 
-        public FencedReadonlyFacade(FencedContainer<T> TheValueContainer)
+        public FencedReadonlyFacade(FencedValueContainer<T> TheValueContainer)
         {
 
             myValueContainer = TheValueContainer;

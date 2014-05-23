@@ -9,49 +9,49 @@ namespace CoreComponents.Threading
 {
 
     [Serializable]
-    public class LockingDictionary<TKey, TValue>
+    public class MonitorDictionary<TKey, TValue>
     {
         
         protected object myLockObject = new object();
 
         protected Dictionary<TKey, TValue> myDictionary;
 
-        public LockingDictionary()
+        public MonitorDictionary()
         {
 
             myDictionary = new Dictionary<TKey,TValue>(); 
 
         }
 
-        public LockingDictionary(IDictionary<TKey, TValue> dictionary)
+        public MonitorDictionary(IDictionary<TKey, TValue> dictionary)
         {
 
             myDictionary = new Dictionary<TKey,TValue>(dictionary);
 
         }
 
-        public LockingDictionary(IEqualityComparer<TKey> comparer)
+        public MonitorDictionary(IEqualityComparer<TKey> comparer)
         {
 
             myDictionary = new Dictionary<TKey,TValue>(comparer);
 
         }
 
-        public LockingDictionary(int capacity)
+        public MonitorDictionary(int capacity)
         {
 
             myDictionary = new Dictionary<TKey, TValue>(capacity);
 
         }
 
-        public LockingDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> comparer)
+        public MonitorDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> comparer)
         {
 
             myDictionary = new Dictionary<TKey, TValue>(dictionary, comparer);
 
         }
 
-        public LockingDictionary(int capacity, IEqualityComparer<TKey> comparer)
+        public MonitorDictionary(int capacity, IEqualityComparer<TKey> comparer)
         {
 
             myDictionary = new Dictionary<TKey, TValue>(capacity, comparer);

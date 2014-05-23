@@ -359,11 +359,11 @@ namespace CoreComponents.Threading
 
         }
 
-        public ConcurrentValueContainer<bool> AsyncWait(ConcurrentValueContainer<bool> TheContainer = null)
+        public SpinValueContainer<bool> AsyncWait(SpinValueContainer<bool> TheContainer = null)
         {
 
             if(TheContainer == null)
-                TheContainer = new ConcurrentValueContainer<bool>();
+                TheContainer = new SpinValueContainer<bool>();
 
             ThreadPool.QueueUserWorkItem((TheState) =>
             {
@@ -378,11 +378,11 @@ namespace CoreComponents.Threading
 
         }
 
-        public ConcurrentValueContainer<bool> AsyncWait(CancellationToken TheCancellationToken, ConcurrentValueContainer<bool> TheContainer = null)
+        public SpinValueContainer<bool> AsyncWait(CancellationToken TheCancellationToken, SpinValueContainer<bool> TheContainer = null)
         {
 
             if(TheContainer == null)
-                TheContainer = new ConcurrentValueContainer<bool>();
+                TheContainer = new SpinValueContainer<bool>();
 
             ThreadPool.QueueUserWorkItem((TheState) =>
             {
@@ -395,11 +395,11 @@ namespace CoreComponents.Threading
 
         }
 
-        public ConcurrentValueContainer<bool> AsyncWaitCount(int Iterations, ConcurrentValueContainer<bool> TheContainer = null)
+        public SpinValueContainer<bool> AsyncWaitCount(int Iterations, SpinValueContainer<bool> TheContainer = null)
         {
 
             if(TheContainer == null)
-                TheContainer = new ConcurrentValueContainer<bool>();
+                TheContainer = new SpinValueContainer<bool>();
 
             ThreadPool.QueueUserWorkItem((TheState) =>
             {
@@ -414,11 +414,11 @@ namespace CoreComponents.Threading
 
         }
 
-        public ConcurrentValueContainer<bool> AsyncWaitCount(int Iterations, CancellationToken TheCancellationToken, ConcurrentValueContainer<bool> TheContainer = null)
+        public SpinValueContainer<bool> AsyncWaitCount(int Iterations, CancellationToken TheCancellationToken, SpinValueContainer<bool> TheContainer = null)
         {
 
             if(TheContainer == null)
-                TheContainer = new ConcurrentValueContainer<bool>();
+                TheContainer = new SpinValueContainer<bool>();
 
             ThreadPool.QueueUserWorkItem((TheState) =>
             {
@@ -433,11 +433,11 @@ namespace CoreComponents.Threading
 
         }
 
-        public ConcurrentValueContainer<bool> AsyncWait(int MillisecondsTimeout, ConcurrentValueContainer<bool> TheContainer = null)
+        public SpinValueContainer<bool> AsyncWait(int MillisecondsTimeout, SpinValueContainer<bool> TheContainer = null)
         {
 
             if(TheContainer == null)
-                TheContainer = new ConcurrentValueContainer<bool>();
+                TheContainer = new SpinValueContainer<bool>();
 
             ThreadPool.QueueUserWorkItem((TheState) =>
             {
@@ -450,11 +450,11 @@ namespace CoreComponents.Threading
 
         }
 
-        public ConcurrentValueContainer<bool> AsyncWait(TimeSpan Timeout, ConcurrentValueContainer<bool> TheContainer = null)
+        public SpinValueContainer<bool> AsyncWait(TimeSpan Timeout, SpinValueContainer<bool> TheContainer = null)
         {
 
             if(TheContainer == null)
-                TheContainer = new ConcurrentValueContainer<bool>();
+                TheContainer = new SpinValueContainer<bool>();
 
             ThreadPool.QueueUserWorkItem((TheState) =>
             {
@@ -467,11 +467,11 @@ namespace CoreComponents.Threading
 
         }
 
-        public ConcurrentValueContainer<bool> AsyncWait(int MillisecondsTimeout, CancellationToken TheCancellationToken, ConcurrentValueContainer<bool> TheContainer = null)
+        public SpinValueContainer<bool> AsyncWait(int MillisecondsTimeout, CancellationToken TheCancellationToken, SpinValueContainer<bool> TheContainer = null)
         {
 
             if(TheContainer == null)
-                TheContainer = new ConcurrentValueContainer<bool>();
+                TheContainer = new SpinValueContainer<bool>();
 
             ThreadPool.QueueUserWorkItem((TheState) =>
             {
@@ -484,11 +484,11 @@ namespace CoreComponents.Threading
 
         }
 
-        public ConcurrentValueContainer<bool> AsyncWait(TimeSpan Timeout, CancellationToken TheCancellationToken, ConcurrentValueContainer<bool> TheContainer = null)
+        public SpinValueContainer<bool> AsyncWait(TimeSpan Timeout, CancellationToken TheCancellationToken, SpinValueContainer<bool> TheContainer = null)
         {
 
             if(TheContainer == null)
-                TheContainer = new ConcurrentValueContainer<bool>();
+                TheContainer = new SpinValueContainer<bool>();
 
             ThreadPool.QueueUserWorkItem((TheState) =>
             {

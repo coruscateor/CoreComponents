@@ -6,10 +6,10 @@ using System.Text;
 namespace CoreComponents.Threading
 {
 
-    public class LockingOutputQueueContainer<T> : BaseLockingQueueContainer<T>, IOutputQueue<T>
+    public class MonitorOutputQueueContainer<T> : BaseMonitorQueueContainer<T>, IOutputQueue<T>
     {
 
-        public LockingOutputQueueContainer(Queue<T> TheQueue, object TheLockObject)
+        public MonitorOutputQueueContainer(Queue<T> TheQueue, object TheLockObject)
             : base(TheQueue, TheLockObject)
         {
         }

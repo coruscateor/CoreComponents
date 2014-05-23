@@ -6,7 +6,7 @@ using System.Text;
 namespace CoreComponents.Threading
 {
 
-    public class LockingLazyObject<T>
+    public class MonitorLazyObject<T>
         where T : class, new()
     {
 
@@ -14,7 +14,7 @@ namespace CoreComponents.Threading
 
         object myLockingObject;
 
-        public LockingLazyObject()
+        public MonitorLazyObject()
         {
 
             myObject = null;

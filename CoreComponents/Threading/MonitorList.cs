@@ -7,35 +7,35 @@ using System.Threading.Tasks;
 namespace CoreComponents.Threading
 {
 
-    public class LockingList<T> : IList<T>, IToArray<T>
+    public class MonitorList<T> : IList<T>, IToArray<T>
     {
 
         protected List<T> myList;
 
         protected object myLockingObject = new object();
 
-        public LockingList()
+        public MonitorList()
         {
 
             myList = new List<T>();
 
         }
 
-        public LockingList(IEnumerable<T> TheItems)
+        public MonitorList(IEnumerable<T> TheItems)
         {
 
             myList = new List<T>(TheItems);
 
         }
 
-        public LockingList(int TheCapacity)
+        public MonitorList(int TheCapacity)
         {
 
             myList = new List<T>(TheCapacity);
 
         }
 
-        public LockingList(T[] TheItems, bool SetCapacity)
+        public MonitorList(T[] TheItems, bool SetCapacity)
         {
 
             myList = new List<T>(TheItems);
@@ -45,7 +45,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public LockingList(IList<T> TheItems, bool SetCapacity)
+        public MonitorList(IList<T> TheItems, bool SetCapacity)
         {
 
             myList = new List<T>(TheItems);

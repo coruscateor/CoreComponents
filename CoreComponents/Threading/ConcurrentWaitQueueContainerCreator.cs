@@ -13,7 +13,8 @@ namespace CoreComponents.Threading
 
         protected WaitWatcher myWaitWatcher;
 
-        public ConcurrentWaitQueueContainerCreator() : base(new ConcurrentQueue<T>())
+        public ConcurrentWaitQueueContainerCreator()
+            : base(new ConcurrentQueue<T>())
         {
         }
 

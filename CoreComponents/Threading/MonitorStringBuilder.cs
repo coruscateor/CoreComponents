@@ -7,7 +7,7 @@ using CoreComponents.Text;
 namespace CoreComponents.Threading
 {
 
-    public class ConcurrentStringBuilder : IToArray<char>, IToStringBuilder
+    public class MonitorStringBuilder : IToArray<char>, IToStringBuilder
     {
 
         protected StringBuilder mySB;
@@ -16,49 +16,49 @@ namespace CoreComponents.Threading
 
         protected char myPaddingValue = ' ';
 
-        public ConcurrentStringBuilder()
+        public MonitorStringBuilder()
         {
 
             mySB = new StringBuilder();
 
         }
 
-        public ConcurrentStringBuilder(int TheCapacity)
+        public MonitorStringBuilder(int TheCapacity)
         {
 
             mySB = new StringBuilder(TheCapacity);
 
         }
 
-        public ConcurrentStringBuilder(string TheValue)
+        public MonitorStringBuilder(string TheValue)
         {
 
             mySB = new StringBuilder(TheValue);
 
         }
 
-        public ConcurrentStringBuilder(int TheCapacity, int TheMaxCapacity)
+        public MonitorStringBuilder(int TheCapacity, int TheMaxCapacity)
         {
 
             mySB = new StringBuilder(TheCapacity, TheMaxCapacity);
 
         }
 
-        public ConcurrentStringBuilder(string TheValue, int TheCapacity)
+        public MonitorStringBuilder(string TheValue, int TheCapacity)
         {
 
             mySB = new StringBuilder(TheValue, TheCapacity);
 
         }
 
-        public ConcurrentStringBuilder(string TheValue, int TheCtartIndex, int TheLength, int TheCapacity)
+        public MonitorStringBuilder(string TheValue, int TheCtartIndex, int TheLength, int TheCapacity)
         {
 
             mySB = new StringBuilder(TheValue, TheCtartIndex, TheLength, TheCapacity);
 
         }
 
-        public ConcurrentStringBuilder(IEnumerable<char> TheChars)
+        public MonitorStringBuilder(IEnumerable<char> TheChars)
         {
 
             mySB = new StringBuilder();
@@ -422,7 +422,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public void Append(ConcurrentStringBuilder TheStringBuilder)
+        public void Append(MonitorStringBuilder TheStringBuilder)
         {
 
             if(TheStringBuilder == this)
@@ -816,7 +816,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public void AppendLine(ConcurrentStringBuilder TheStringBuilder)
+        public void AppendLine(MonitorStringBuilder TheStringBuilder)
         {
 
             if(TheStringBuilder == this)
@@ -892,7 +892,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool Equals(ConcurrentStringBuilder TheStringBuilder)
+        public bool Equals(MonitorStringBuilder TheStringBuilder)
         {
 
             if(TheStringBuilder == this)
@@ -1247,7 +1247,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public void Insert(int Index, ConcurrentStringBuilder TheStringBuilder)
+        public void Insert(int Index, MonitorStringBuilder TheStringBuilder)
         {
 
             if(TheStringBuilder == this)

@@ -6,25 +6,25 @@ using System.Text;
 namespace CoreComponents.Threading.SubThreading
 {
 
-    public abstract class LockingIsolatedServerTimer : BaseIsolatedServerTimer, ISubThread
+    public abstract class MonitorIsolatedServerTimer : BaseIsolatedServerTimer, ISubThread
     {
 
-        private LockingInputQueueContainer<object> myInputQueueContainer;
+        private MonitorInputQueueContainer<object> myInputQueueContainer;
 
-        private LockingOutputQueueContainer<object> myOutputQueueContainer;
+        private MonitorOutputQueueContainer<object> myOutputQueueContainer;
 
-        private LockingReadOnlyState<string, object> myReadOnlyState;
+        private MonitorReadOnlyState<string, object> myReadOnlyState;
 
-        private LockingAsynchronousInputOutput<object, object> myThreadIO;
+        private MonitorAsynchronousInputOutput<object, object> myThreadIO;
 
-        public LockingIsolatedServerTimer()
+        public MonitorIsolatedServerTimer()
         {
 
             Initialise();
 
         }
 
-        public LockingIsolatedServerTimer(double TheInterval, bool Start = true)
+        public MonitorIsolatedServerTimer(double TheInterval, bool Start = true)
             : base(TheInterval, Start)
         {
 
@@ -49,13 +49,13 @@ namespace CoreComponents.Threading.SubThreading
 
             object TheDictionaryLockObject = new object();
 
-            myThreadIO = new LockingAsynchronousInputOutput<object, object>(InputQueue, TheInputLockObject, OutputQueue, TheOutputLockObject, Dictionary, TheDictionaryLockObject);
+            myThreadIO = new MonitorAsynchronousInputOutput<object, object>(InputQueue, TheInputLockObject, OutputQueue, TheOutputLockObject, Dictionary, TheDictionaryLockObject);
 
-            myInputQueueContainer = new LockingInputQueueContainer<object>(InputQueue, TheInputLockObject);
+            myInputQueueContainer = new MonitorInputQueueContainer<object>(InputQueue, TheInputLockObject);
 
-            myOutputQueueContainer = new LockingOutputQueueContainer<object>(OutputQueue, TheOutputLockObject);
+            myOutputQueueContainer = new MonitorOutputQueueContainer<object>(OutputQueue, TheOutputLockObject);
 
-            myReadOnlyState = new LockingReadOnlyState<string, object>(Dictionary, TheDictionaryLockObject);
+            myReadOnlyState = new MonitorReadOnlyState<string, object>(Dictionary, TheDictionaryLockObject);
 
         }
 

@@ -8,7 +8,7 @@ namespace CoreComponents.Threading
 {
 
     [Serializable]
-    public class ConcurrentOutputQueueContainer<TType> : BaseConcurrentQueueContainer<TType>, IOutputQueue<TType>
+    public class ConcurrentOutputQueueContainer<TType> : ConcurrentQueueContainer<TType>, IOutputQueue<TType>
     {
 
         public ConcurrentOutputQueueContainer(ConcurrentQueue<TType> TheQueue)

@@ -20,7 +20,8 @@ namespace CoreComponents.Threading
 
         }
 
-        public ConcurrentState(ConcurrentDictionary<TKey, TValue> TheDictionary) : base(TheDictionary)
+        public ConcurrentState(ConcurrentDictionary<TKey, TValue> TheDictionary)
+            : base(TheDictionary)
         {
 
             //myDictionary = TheDictionary;

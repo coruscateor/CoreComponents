@@ -6,22 +6,22 @@ using System.Text;
 namespace CoreComponents.Threading.SubThreading
 {
 
-    public abstract class LockingIsolatedTimer : BaseIsolatedTimer, ISubThread
+    public abstract class MonitorIsolatedTimer : BaseIsolatedTimer, ISubThread
     {
 
-        private LockingInputQueueContainer<object> myInputQueueContainer;
+        private MonitorInputQueueContainer<object> myInputQueueContainer;
 
-        private LockingOutputQueueContainer<object> myOutputQueueContainer;
+        private MonitorOutputQueueContainer<object> myOutputQueueContainer;
 
-        private LockingReadOnlyState<string, object> myReadOnlyState;
+        private MonitorReadOnlyState<string, object> myReadOnlyState;
 
-        private LockingAsynchronousInputOutput<object, object> myThreadIO;
+        private MonitorAsynchronousInputOutput<object, object> myThreadIO;
 
-        public LockingIsolatedTimer() : base()
+        public MonitorIsolatedTimer() : base()
         {
         }
 
-        public LockingIsolatedTimer(int TheDueTime, int ThePeriod, object TheProvidedState = null)
+        public MonitorIsolatedTimer(int TheDueTime, int ThePeriod, object TheProvidedState = null)
             : base(TheDueTime, ThePeriod, TheProvidedState)
         {
 
@@ -29,7 +29,7 @@ namespace CoreComponents.Threading.SubThreading
 
         }
 
-        public LockingIsolatedTimer(long TheDueTime, long ThePeriod, object TheProvidedState = null)
+        public MonitorIsolatedTimer(long TheDueTime, long ThePeriod, object TheProvidedState = null)
             : base(TheDueTime, ThePeriod, TheProvidedState)
         {
 
@@ -37,7 +37,7 @@ namespace CoreComponents.Threading.SubThreading
 
         }
 
-        public LockingIsolatedTimer(TimeSpan TheDueTime, TimeSpan ThePeriod, object TheProvidedState = null)
+        public MonitorIsolatedTimer(TimeSpan TheDueTime, TimeSpan ThePeriod, object TheProvidedState = null)
             : base(TheDueTime, ThePeriod, TheProvidedState)
         {
 
@@ -45,7 +45,7 @@ namespace CoreComponents.Threading.SubThreading
 
         }
 
-        public LockingIsolatedTimer(uint TheDueTime, uint ThePeriod, object TheProvidedState = null)
+        public MonitorIsolatedTimer(uint TheDueTime, uint ThePeriod, object TheProvidedState = null)
             : base(TheDueTime, ThePeriod, TheProvidedState)
         {
 
@@ -68,13 +68,13 @@ namespace CoreComponents.Threading.SubThreading
 
             object TheDictionaryLockObject = new object();
 
-            myThreadIO = new LockingAsynchronousInputOutput<object, object>(InputQueue, TheInputLockObject, OutputQueue, TheOutputLockObject, Dictionary, TheDictionaryLockObject);
+            myThreadIO = new MonitorAsynchronousInputOutput<object, object>(InputQueue, TheInputLockObject, OutputQueue, TheOutputLockObject, Dictionary, TheDictionaryLockObject);
 
-            myInputQueueContainer = new LockingInputQueueContainer<object>(InputQueue, TheInputLockObject);
+            myInputQueueContainer = new MonitorInputQueueContainer<object>(InputQueue, TheInputLockObject);
 
-            myOutputQueueContainer = new LockingOutputQueueContainer<object>(OutputQueue, TheOutputLockObject);
+            myOutputQueueContainer = new MonitorOutputQueueContainer<object>(OutputQueue, TheOutputLockObject);
 
-            myReadOnlyState = new LockingReadOnlyState<string, object>(Dictionary, TheDictionaryLockObject);
+            myReadOnlyState = new MonitorReadOnlyState<string, object>(Dictionary, TheDictionaryLockObject);
 
         }
 

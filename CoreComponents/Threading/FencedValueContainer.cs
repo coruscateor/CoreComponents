@@ -7,13 +7,16 @@ using System.Threading;
 namespace CoreComponents.Threading
 {
 
-    public class FencedValueContainer<T> : IValueContainer<T>
+    public class FencedValueContainer<T> : IFencedContainer<T> 
     {
 
         protected T myValue;
 
         public FencedValueContainer()
         {
+
+            myValue = default(T);
+
         }
 
         public FencedValueContainer(T TheValue)
@@ -22,8 +25,8 @@ namespace CoreComponents.Threading
             myValue = TheValue;
 
         }
-        
-        public virtual T Value
+
+        public T Value
         {
 
             get
@@ -31,9 +34,7 @@ namespace CoreComponents.Threading
 
                 Thread.MemoryBarrier();
 
-                T TheValue = myValue; 
-
-                return TheValue;
+                return myValue;
 
             }
             set
@@ -44,6 +45,64 @@ namespace CoreComponents.Threading
                 Thread.MemoryBarrier();
 
             }
+
+        }
+
+        public bool IsDefault
+        {
+
+            get
+            {
+
+                Thread.MemoryBarrier();
+
+                return object.Equals(myValue, default(T));
+
+            }
+
+        }
+
+        public bool ComapreSet(ref T TheValue)
+        {
+
+            Thread.MemoryBarrier();
+
+            if(!object.Equals(myValue, TheValue))
+            {
+
+                myValue = TheValue;
+
+                Thread.MemoryBarrier();
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+        public bool ComapreSwap(ref T TheValue)
+        {
+
+            Thread.MemoryBarrier();
+
+            if(!object.Equals(myValue, TheValue))
+            {
+
+                T TempValue = myValue;
+
+                myValue = TheValue;
+
+                myValue = TempValue;
+
+                Thread.MemoryBarrier();
+
+                return true;
+
+            }
+
+            return false;
 
         }
 

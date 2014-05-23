@@ -8,28 +8,28 @@ namespace CoreComponents.Threading
 {
 
     [Serializable]
-    public class LockingQueue<T> : IEnumerable<T>, IEnumerable
+    public class MonitorQueue<T> : IEnumerable<T>, IEnumerable
     {
 
         protected object myLockObject = new object();
 
         protected Queue<T> myQueue;
 
-        public LockingQueue()
+        public MonitorQueue()
         {
 
             myQueue = new Queue<T>();
 
         }
 
-        public LockingQueue(IEnumerable<T> collection)
+        public MonitorQueue(IEnumerable<T> collection)
         {
 
             myQueue = new Queue<T>(collection);
 
         }
 
-        public LockingQueue(int capacity)
+        public MonitorQueue(int capacity)
         {
 
             myQueue = new Queue<T>(capacity);

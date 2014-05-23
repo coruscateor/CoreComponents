@@ -102,7 +102,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public static ConcurrentQueue<T> Create(ConcurrentValueContainer<bool> Continue, object[] TheParameters, uint CheckingRegularity = 10)
+        public static ConcurrentQueue<T> Create(SpinValueContainer<bool> Continue, object[] TheParameters, uint CheckingRegularity = 10)
         {
 
             ConcurrentQueue<T> NewQueue = new ConcurrentQueue<T>();
@@ -158,7 +158,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public static void CreateInto(ConcurrentValueContainer<bool> Continue, ConcurrentQueue<T> TheQueue, object[] TheParameters, uint CheckingRegularity = 10)
+        public static void CreateInto(SpinValueContainer<bool> Continue, ConcurrentQueue<T> TheQueue, object[] TheParameters, uint CheckingRegularity = 10)
         {
             
             Type CurrentType = typeof(T);
@@ -210,7 +210,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public static void CreateInto(ConcurrentValueContainer<bool> Continue, IInputQueue<T> TheQueue, object[] TheParameters, uint CheckingRegularity = 10)
+        public static void CreateInto(SpinValueContainer<bool> Continue, IInputQueue<T> TheQueue, object[] TheParameters, uint CheckingRegularity = 10)
         {
 
             Type CurrentType = typeof(T);

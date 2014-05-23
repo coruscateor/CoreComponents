@@ -7,10 +7,11 @@ using System.Text;
 namespace CoreComponents.Threading
 {
 
-    public class ConcurrentQueueContainerCreator<T> : BaseConcurrentQueueContainer<T>, IOutputQueue<T>, IInputQueue<T>
+    public class ConcurrentQueueContainerCreator<T> : ConcurrentQueueContainer<T>, IOutputQueue<T>, IInputQueue<T>
     {
 
-        public ConcurrentQueueContainerCreator() : base(new ConcurrentQueue<T>())
+        public ConcurrentQueueContainerCreator()
+            : base(new ConcurrentQueue<T>())
         {
         }
 

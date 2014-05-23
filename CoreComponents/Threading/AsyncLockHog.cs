@@ -55,42 +55,42 @@ namespace CoreComponents.Threading
 
         }
 
-        public void GetLockObject(ConcurrentValueContainer<object> LockObjectContainer, ConcurrentValueContainer<bool> HasWrittenContainer)
+        public void GetLockObject(SpinValueContainer<object> LockObjectContainer, SpinValueContainer<bool> HasWrittenContainer)
         {
 
             myLHT.GetLockObject(LockObjectContainer, HasWrittenContainer);
 
         }
 
-        public void SetLockObject(object TheLockObject, ConcurrentValueContainer<bool> HasWrittenContainer)
+        public void SetLockObject(object TheLockObject, SpinValueContainer<bool> HasWrittenContainer)
         {
 
             myLHT.SetLockObject(TheLockObject, HasWrittenContainer);
 
         }
 
-        public void TryEnter(int MillisecondsTimeout, ConcurrentValueContainer<bool> HasEntered, ConcurrentValueContainer<bool> HasWrittenContainer)
+        public void TryEnter(int MillisecondsTimeout, SpinValueContainer<bool> HasEntered, SpinValueContainer<bool> HasWrittenContainer)
         {
 
             myLHT.TryEnter(MillisecondsTimeout, HasEntered, HasWrittenContainer);
 
         }
 
-        public void TryEnter(TimeSpan Timeout, ConcurrentValueContainer<bool> HasEntered, ConcurrentValueContainer<bool> HasWrittenContainer)
+        public void TryEnter(TimeSpan Timeout, SpinValueContainer<bool> HasEntered, SpinValueContainer<bool> HasWrittenContainer)
         {
 
             myLHT.TryEnter(Timeout, HasEntered, HasWrittenContainer);
 
         }
 
-        public void TryEnter(int MillisecondsTimeout, ConcurrentValueContainer<bool> HasEntered, ConcurrentValueContainer<bool> HasWrittenContainer, int MillisecondsWait)
+        public void TryEnter(int MillisecondsTimeout, SpinValueContainer<bool> HasEntered, SpinValueContainer<bool> HasWrittenContainer, int MillisecondsWait)
         {
 
             myLHT.TryEnter(MillisecondsTimeout, HasEntered, HasWrittenContainer, MillisecondsTimeout);
 
         }
 
-        public void TryEnter(TimeSpan Timeout, ConcurrentValueContainer<bool> HasEntered, ConcurrentValueContainer<bool> HasWrittenContainer, TimeSpan Wait)
+        public void TryEnter(TimeSpan Timeout, SpinValueContainer<bool> HasEntered, SpinValueContainer<bool> HasWrittenContainer, TimeSpan Wait)
         {
 
             myLHT.TryEnter(Timeout, HasEntered, HasWrittenContainer, Wait);
@@ -113,7 +113,7 @@ namespace CoreComponents.Threading
 
             protected ConcurrentQueue<Action> myDelegateQueue = new ConcurrentQueue<Action>();
 
-            protected LockHog myLockHog = new LockHog();
+            protected MonitorHog myLockHog = new MonitorHog();
 
             public LockHogThread()
             {
@@ -149,7 +149,7 @@ namespace CoreComponents.Threading
 
             }
 
-            public void IsEntered(ConcurrentValueContainer<bool> HasEnteredContainer, ConcurrentValueContainer<bool> HasWrittenContainer)
+            public void IsEntered(SpinValueContainer<bool> HasEnteredContainer, SpinValueContainer<bool> HasWrittenContainer)
             {
 
                 if(HasEnteredContainer == null)
@@ -219,7 +219,7 @@ namespace CoreComponents.Threading
 
             }
 
-            public void GetLockObject(ConcurrentValueContainer<object> LockObjectContainer, ConcurrentValueContainer<bool> HasWrittenContainer)
+            public void GetLockObject(SpinValueContainer<object> LockObjectContainer, SpinValueContainer<bool> HasWrittenContainer)
             {
 
                 myDelegateQueue.Enqueue(() =>
@@ -233,7 +233,7 @@ namespace CoreComponents.Threading
 
             }
 
-            public void SetLockObject(object TheLockObject, ConcurrentValueContainer<bool> HasWrittenContainer)
+            public void SetLockObject(object TheLockObject, SpinValueContainer<bool> HasWrittenContainer)
             {
 
                 if(TheLockObject == null)
@@ -250,7 +250,7 @@ namespace CoreComponents.Threading
 
             }
 
-            public void TryEnter(int MillisecondsTimeout, ConcurrentValueContainer<bool> HasEntered, ConcurrentValueContainer<bool> HasWrittenContainer)
+            public void TryEnter(int MillisecondsTimeout, SpinValueContainer<bool> HasEntered, SpinValueContainer<bool> HasWrittenContainer)
             {
 
                 myDelegateQueue.Enqueue(() =>
@@ -264,7 +264,7 @@ namespace CoreComponents.Threading
 
             }
 
-            public void TryEnter(TimeSpan Timeout, ConcurrentValueContainer<bool> HasEntered, ConcurrentValueContainer<bool> HasWrittenContainer)
+            public void TryEnter(TimeSpan Timeout, SpinValueContainer<bool> HasEntered, SpinValueContainer<bool> HasWrittenContainer)
             {
 
                 myDelegateQueue.Enqueue(() =>
@@ -278,7 +278,7 @@ namespace CoreComponents.Threading
 
             }
 
-            public void TryEnter(int MillisecondsTimeout, ConcurrentValueContainer<bool> HasEntered, ConcurrentValueContainer<bool> HasWrittenContainer, int MillisecondsWait)
+            public void TryEnter(int MillisecondsTimeout, SpinValueContainer<bool> HasEntered, SpinValueContainer<bool> HasWrittenContainer, int MillisecondsWait)
             {
 
                 myDelegateQueue.Enqueue(() =>
@@ -303,7 +303,7 @@ namespace CoreComponents.Threading
 
             }
 
-            public void TryEnter(TimeSpan Timeout, ConcurrentValueContainer<bool> HasEntered, ConcurrentValueContainer<bool> HasWrittenContainer, TimeSpan Wait)
+            public void TryEnter(TimeSpan Timeout, SpinValueContainer<bool> HasEntered, SpinValueContainer<bool> HasWrittenContainer, TimeSpan Wait)
             {
 
                 myDelegateQueue.Enqueue(() =>

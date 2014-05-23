@@ -7,18 +7,18 @@ using System.Threading;
 namespace CoreComponents.Threading
 {
 
-    public class LockHog : IDisposable
+    public class MonitorHog : IDisposable
     {
 
         protected object myLockObject;
 
         protected bool myHasEntered;
 
-        public LockHog()
+        public MonitorHog()
         {
         }
 
-        public LockHog(object TheLockHog)
+        public MonitorHog(object TheLockHog)
         {
 
             TheLockHog = myLockObject;
@@ -234,9 +234,7 @@ namespace CoreComponents.Threading
         public bool TryEnter(int MillisecondsTimeout)
         {
 
-            bool LockTaken = Monitor.TryEnter(myLockObject, MillisecondsTimeout);
-
-            if(LockTaken)
+            if(Monitor.TryEnter(myLockObject, MillisecondsTimeout))
             {
 
                 myHasEntered = true;
@@ -253,9 +251,7 @@ namespace CoreComponents.Threading
         public bool TryEnterThenExit(int MillisecondsTimeout)
         {
 
-            bool LockTaken = Monitor.TryEnter(myLockObject, MillisecondsTimeout);
-
-            if(LockTaken)
+            if(Monitor.TryEnter(myLockObject, MillisecondsTimeout))
             {
 
                 myHasEntered = true;
@@ -275,9 +271,7 @@ namespace CoreComponents.Threading
         public bool TryEnterThenExit(int MillisecondsTimeout, int MillisecondsWait)
         {
 
-            bool LockTaken = Monitor.TryEnter(myLockObject, MillisecondsTimeout);
-
-            if(LockTaken)
+            if(Monitor.TryEnter(myLockObject, MillisecondsTimeout))
             {
 
                 try
@@ -317,7 +311,7 @@ namespace CoreComponents.Threading
 
                 myHasEntered = true;
 
-                LockTaken = LockIsTaken;
+                LockTaken = true;
 
             }
 
@@ -326,9 +320,7 @@ namespace CoreComponents.Threading
         public bool TryEnter(TimeSpan Timeout)
         {
 
-            bool LockTaken = Monitor.TryEnter(Timeout);
-
-            if(LockTaken)
+            if(Monitor.TryEnter(Timeout))
             {
 
                 myHasEntered = true;
@@ -344,9 +336,7 @@ namespace CoreComponents.Threading
         public bool TryEnterThenExit(TimeSpan Timeout)
         {
 
-            bool LockTaken = Monitor.TryEnter(Timeout);
-
-            if(LockTaken)
+            if(Monitor.TryEnter(Timeout))
             {
 
                 myHasEntered = true;
@@ -366,9 +356,7 @@ namespace CoreComponents.Threading
         public bool TryEnterThenExit(TimeSpan Timeout, TimeSpan WaitTimeout)
         {
 
-            bool LockTaken = Monitor.TryEnter(myLockObject, Timeout);
-
-            if(LockTaken)
+            if(Monitor.TryEnter(myLockObject, Timeout))
             {
 
                 try
@@ -404,7 +392,13 @@ namespace CoreComponents.Threading
             Monitor.TryEnter(myLockObject, MillisecondsTimeout, ref LockIsTaken);
 
             if(LockIsTaken)
+            {
+
                 LockTaken = true;
+
+                myHasEntered = true;
+
+            }
             
         }
 
