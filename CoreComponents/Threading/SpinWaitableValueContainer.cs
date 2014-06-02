@@ -7,7 +7,7 @@ using System.Threading;
 namespace CoreComponents.Threading
 {
 
-    public class SpinVisitingContainer<T> : SpinValueContainer<T>, IDisposable
+    public class SpinWaitableValueContainer<T> : SpinValueContainer<T>, IWaitableValueContainer<T>, IDisposable
     {
 
         protected bool myHasBeenSet;
@@ -16,19 +16,19 @@ namespace CoreComponents.Threading
 
         protected ManualResetEventSlim myManualResetEvent = new ManualResetEventSlim();
 
-        public SpinVisitingContainer()
+        public SpinWaitableValueContainer()
         {
         }
 
-        public SpinVisitingContainer(T TheValue) : base(TheValue)
+        public SpinWaitableValueContainer(T TheValue) : base(TheValue)
         {
         }
 
-        public SpinVisitingContainer(bool UsesMemoryBarrier) : base(UsesMemoryBarrier)
+        public SpinWaitableValueContainer(bool UsesMemoryBarrier) : base(UsesMemoryBarrier)
         {
         }
 
-        public SpinVisitingContainer(T TheValue, bool UsesMemoryBarrier)
+        public SpinWaitableValueContainer(T TheValue, bool UsesMemoryBarrier)
             : base(TheValue, UsesMemoryBarrier)
         {
         }
@@ -90,7 +90,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public void Reset()
+        public virtual void Reset()
         {
 
             bool LockTaken = false;
@@ -182,7 +182,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool WaitAndGet(TimeSpan TheTimeout, Action<T> TheAction)
+        public virtual bool WaitAndGet(TimeSpan TheTimeout, Action<T> TheAction)
         {
 
             if(myManualResetEvent.Wait(TheTimeout))
@@ -198,7 +198,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool WaitAndGet(int TheMillisecondsTimeout, CancellationToken TheCancellationToken, Action<T> TheAction)
+        public virtual bool WaitAndGet(int TheMillisecondsTimeout, CancellationToken TheCancellationToken, Action<T> TheAction)
         {
 
             if(myManualResetEvent.Wait(TheMillisecondsTimeout, TheCancellationToken))
@@ -214,7 +214,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool WaitAndGet(TimeSpan TheTimeout, CancellationToken TheCancellationToken, Action<T> TheAction)
+        public virtual bool WaitAndGet(TimeSpan TheTimeout, CancellationToken TheCancellationToken, Action<T> TheAction)
         {
 
             if(myManualResetEvent.Wait(TheTimeout, TheCancellationToken))
@@ -230,7 +230,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public T WaitAndGet()
+        public virtual T WaitAndGet()
         {
 
             myManualResetEvent.Wait();
@@ -239,7 +239,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public T WaitAndGet(CancellationToken TheCancellationToken)
+        public virtual T WaitAndGet(CancellationToken TheCancellationToken)
         {
 
             myManualResetEvent.Wait(TheCancellationToken);
@@ -248,7 +248,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool WaitAndGet(int TheMillisecondsTimeout, out T TheResult)
+        public virtual bool WaitAndGet(int TheMillisecondsTimeout, out T TheResult)
         {
 
             if(myManualResetEvent.Wait(TheMillisecondsTimeout))
@@ -266,7 +266,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool WaitAndGet(TimeSpan TheTimeout, out T TheResult)
+        public virtual bool WaitAndGet(TimeSpan TheTimeout, out T TheResult)
         {
 
             if(myManualResetEvent.Wait(TheTimeout))
@@ -284,7 +284,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool WaitAndGet(int TheMillisecondsTimeout, CancellationToken TheCancellationToken, out T TheResult)
+        public virtual bool WaitAndGet(int TheMillisecondsTimeout, CancellationToken TheCancellationToken, out T TheResult)
         {
 
             if(myManualResetEvent.Wait(TheMillisecondsTimeout, TheCancellationToken))
@@ -302,7 +302,7 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool WaitAndGet(TimeSpan TheTimeout, CancellationToken TheCancellationToken, out T TheResult)
+        public virtual bool WaitAndGet(TimeSpan TheTimeout, CancellationToken TheCancellationToken, out T TheResult)
         {
 
             if(myManualResetEvent.Wait(TheTimeout, TheCancellationToken))

@@ -7,7 +7,7 @@ using System.Threading;
 namespace CoreComponents.Threading
 {
 
-    public class SpinValueContainer<T> : IValueContainer<T>
+    public class SpinValueContainer<T> : IValueContainer<T>, IUsesMemoryBarrier
     {
 
         protected T myValue;

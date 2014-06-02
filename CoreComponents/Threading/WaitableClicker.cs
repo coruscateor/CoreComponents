@@ -26,14 +26,20 @@ namespace CoreComponents.Threading
             base.Click();
 
             myResetEvent.Set();
+
         }
 
         public override void Reset()
         {
 
-            base.Reset();
+            if(myResetEvent.IsSet)
+            {
 
-            myResetEvent.Reset();
+                base.Reset();
+
+                myResetEvent.Reset();
+
+            }
 
         }
 

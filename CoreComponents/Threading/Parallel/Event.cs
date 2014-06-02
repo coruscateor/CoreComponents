@@ -8,7 +8,7 @@ using System.Threading;
 namespace CoreComponents.Threading.Parallel
 {
 
-    public class Event : BaseEvent<Delegate>, IExecute, IDisposable
+    public class Event : BaseEvent<Delegate>, IExecute
     {
 
         public Event()
@@ -295,24 +295,7 @@ namespace CoreComponents.Threading.Parallel
             base.Add(TheDelegate);
 
         }
-
-        public override bool TryAdd(Delegate TheDelegate)
-        {
-
-            foreach(var Item in myItems)
-            {
-
-                if(TheDelegate.Method != Item.Method)
-                    throw new Exception("Method signature is incompatable");
-                else
-                    break;
-
-            }
-            
-            return base.TryAdd(TheDelegate);
-
-        }
-
+        
     }
 
 }

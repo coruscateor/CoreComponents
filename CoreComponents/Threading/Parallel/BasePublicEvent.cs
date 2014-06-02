@@ -79,47 +79,6 @@ namespace CoreComponents.Threading.Parallel
 
         }
 
-        public bool TryAdd(TDelegate TheAction)
-        {
-
-            return myEvent.TryAdd(TheAction);
-
-        }
-
-        public bool TryTake(out TDelegate TheItem)
-        {
-
-            TDelegate Item;
-
-            if(myEvent.TryTake(out Item))
-            {
-
-                TheItem = Item;
-
-                return true;
-
-            }
-
-            TheItem = null;
-
-            return false;
-
-        }
-
-        public TDelegate Take()
-        {
-
-            return myEvent.Take();
-
-        }
-
-        public bool TryRemove(TDelegate TheItem)
-        {
-
-            return myEvent.TryRemove(TheItem);
-
-        }
-
     }
 
 }

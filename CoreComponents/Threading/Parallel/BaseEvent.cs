@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -8,14 +7,12 @@ using System.Threading;
 namespace CoreComponents.Threading.Parallel
 {
 
-    public abstract class BaseEvent<T> : IDisposable where T : class
+    public abstract class BaseEvent<T> where T : class
     {
 
         private Exception myException;
 
         private SpinLock myExceptionSpinLock;
-
-        protected BlockingCollection<T> myItems = new BlockingCollection<T>();
 
         private Action<T> myAddAction;
 
@@ -25,20 +22,10 @@ namespace CoreComponents.Threading.Parallel
 
         private SpinLock myRemoveActionSpinLock;
 
+        protected MonitorList<T> myItems = new MonitorList<T>();
+
         public BaseEvent()
         {
-        }
-
-        public int BoundedCapacity
-        {
-
-            get
-            {
-
-                return myItems.BoundedCapacity;
-
-            }
-
         }
 
         public int Count
@@ -48,30 +35,6 @@ namespace CoreComponents.Threading.Parallel
             {
 
                 return myItems.Count;
-
-            }
-
-        }
-
-        public bool IsAddingCompleted
-        {
-
-            get
-            {
-
-                return myItems.IsAddingCompleted;
-
-            }
-
-        }
-
-        public bool IsCompleted
-        {
-
-            get
-            {
-
-                return myItems.IsCompleted;
 
             }
 
@@ -394,62 +357,11 @@ namespace CoreComponents.Threading.Parallel
             TryExecuteAddAction(TheAction);
 
         }
-
-        public virtual bool TryAdd(T TheAction)
+        
+        public virtual bool Remove(T TheItem)
         {
 
-            try
-            {
-
-                return myItems.TryAdd(TheAction);
-
-            }
-            finally
-            {
-
-                TryExecuteAddAction(TheAction);
-
-            }
-
-        }
-
-        public bool TryTake(out T TheItem)
-        {
-
-            T TheItemToTake;
-
-            if(myItems.TryTake(out TheItemToTake))
-            {
-
-                TheItem = TheItemToTake;
-
-                TryExecuteRemoveAction(TheItem);
-
-                return true;
-
-            }
-
-            TheItem = null;
-
-            return false;
-
-        }
-
-        public T Take()
-        {
-
-            T Item = myItems.Take();
-
-            TryExecuteRemoveAction(Item);
-
-            return Item;
-
-        }
-
-        public bool TryRemove(T TheItem)
-        {
-
-            if(myItems.TryTake(out TheItem))
+            if(myItems.Remove(TheItem))
             {
 
                 TryExecuteRemoveAction(TheItem);
@@ -459,13 +371,6 @@ namespace CoreComponents.Threading.Parallel
             }
 
             return false;
-
-        }
-
-        public void Dispose()
-        {
-
-            myItems.Dispose();
 
         }
 

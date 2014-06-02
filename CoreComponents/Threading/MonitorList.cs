@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace CoreComponents.Threading
 {
@@ -195,6 +195,23 @@ namespace CoreComponents.Threading
 
         }
 
+        public bool IsEmpty
+        {
+
+            get
+            {
+
+                lock(myLockingObject)
+                {
+
+                    return myList.Count < 1;
+
+                }
+
+            }
+
+        }
+
         public bool IsReadOnly
         {
 
@@ -258,10 +275,43 @@ namespace CoreComponents.Threading
         public IEnumerator<T> GetEnumerator()
         {
 
-            lock(myLockingObject)
+            //lock(myLockingObject)
+            //{
+
+            //    for(int i = 0; i < myList.Count; ++i)
+            //    {
+
+            //        yield return myList[i];
+
+            //    }
+
+            //}
+
+            //A less naive implentation
+
+            try
             {
 
-                return (IEnumerator<T>)myList.ToArray().GetEnumerator();
+                Monitor.Enter(myLockingObject);
+
+                for(int i = 0; i < myList.Count; ++i)
+                {
+
+                    T Item = myList[i];
+
+                    Monitor.Exit(myLockingObject);
+
+                    yield return Item;
+
+                    Monitor.Enter(myLockingObject);
+
+                }
+
+            }
+            finally
+            {
+
+                Monitor.Exit(myLockingObject);
 
             }
 
@@ -276,49 +326,49 @@ namespace CoreComponents.Threading
 
         //true canceled partway though, false went right through to the end.
 
-        public bool Enumerate(Func<T, bool> TheEnumerationFunc)
-        {
+        //public bool Enumerate(Func<T, bool> TheEnumerationFunc)
+        //{
 
-            lock(myLockingObject)
-            {
+        //    lock(myLockingObject)
+        //    {
 
-                foreach(var Item in myList)
-                {
+        //        foreach(var Item in myList)
+        //        {
 
-                    if(TheEnumerationFunc(Item))
-                        return true;
+        //            if(TheEnumerationFunc(Item))
+        //                return true;
 
-                }
+        //        }
 
-                return false;
+        //        return false;
 
-            }
+        //    }
 
-        }
+        //}
 
-        public int Enumerate(Func<T, int, bool> TheEnumerationFunc)
-        {
+        //public int Enumerate(Func<T, int, bool> TheEnumerationFunc)
+        //{
 
-            lock(myLockingObject)
-            {
+        //    lock(myLockingObject)
+        //    {
 
-                int i = -1;
+        //        int i = -1;
 
-                foreach(var Item in myList)
-                {
+        //        foreach(var Item in myList)
+        //        {
 
-                    ++i;
+        //            ++i;
 
-                    if(TheEnumerationFunc(Item, i))
-                        return i;
+        //            if(TheEnumerationFunc(Item, i))
+        //                return i;
 
-                }
+        //        }
                 
-                return i;
+        //        return i;
 
-            }
+        //    }
 
-        }
+        //}
 
     }
 

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -16,7 +16,7 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <OldToolsVersion>3.5</OldToolsVersion>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="AssemblySafetyAttribute.cs" />
     <Compile Include="ComposesAttribute.cs" />
+    <Compile Include="CouldBeNull.cs" />
     <Compile Include="DefaultValues.cs" />
     <Compile Include="DynamicAndNot.cs" />
     <Compile Include="ExperimentalAttribute.cs" />
@@ -56,6 +57,8 @@
     <None Include="FileSystem\ToBeFixed\MountPoint.cs" />
     <Compile Include="ICloneWith.cs" />
     <Compile Include="InfrastructureAttribute.cs" />
+    <Compile Include="IReadonlyReferenceValueContainer.cs" />
+    <Compile Include="IReferenceValueContainer.cs" />
     <Compile Include="Items\IHasCount.cs" />
     <Compile Include="Items\IHasLongCount.cs" />
     <Compile Include="Items\IListContainer.cs" />
@@ -67,16 +70,13 @@
     <Compile Include="NullTolerantAttribute.cs" />
     <Compile Include="Overflows.cs" />
     <Compile Include="Percentage.cs" />
-    <Compile Include="Properties\Settings3.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
+    <Compile Include="ReadonlyCouldBeNull.cs" />
     <Compile Include="ReadonlyValueContainer.cs" />
     <Compile Include="Safety.cs" />
     <Compile Include="Serial.cs" />
     <Compile Include="Streaming\IStream.cs" />
     <Compile Include="Streaming\Streamer.cs" />
+    <Compile Include="Text\ConcurrentStringBuilderCache.cs" />
     <Compile Include="Text\IAppendTo.cs" />
     <Compile Include="Text\IndentationLevelBuilder.cs" />
     <Compile Include="Text\IndentationType.cs" />
@@ -97,7 +97,7 @@
     <Compile Include="Threading\AccessIndication\WaitAccessIndicatorInternals.cs" />
     <Compile Include="Threading\AccessIndication\WaitAccessHandler.cs" />
     <Compile Include="CAUTIONAttribute.cs" />
-    <Compile Include="Threading\AcquisitionQueue.cs" />
+    <Compile Include="Threading\AccessIndication\AcquisitionQueue.cs" />
     <Compile Include="Threading\ActiveWaitEvent.cs" />
     <Compile Include="Threading\AsyncLockHog.cs" />
     <Compile Include="Threading\BigWaitCounter.cs" />
@@ -105,13 +105,20 @@
     <Compile Include="Threading\Clicker.cs" />
     <Compile Include="Threading\ComplicatedClicker.cs" />
     <Compile Include="Threading\ComplicatedClickerState.cs" />
-    <Compile Include="Threading\ConcurrentStringBuilder.cs" />
-    <Compile Include="Threading\ConcurrentVisitingContainer.cs" />
+    <Compile Include="Threading\ConcurrentCache.cs" />
+    <Compile Include="Text\MonitorStringBuilder.cs" />
+    <Compile Include="Threading\IUsesMemoryBarrier.cs" />
+    <Compile Include="Threading\IWaitable.cs" />
+    <Compile Include="Threading\IWaitableValueContainer.cs" />
+    <Compile Include="Threading\Jobs\MonitorJob.cs" />
+    <Compile Include="Threading\MonitorValueContainer.cs" />
+    <Compile Include="Threading\QuickInputOutputMessage.cs" />
+    <Compile Include="Threading\SpinWaitableValueContainer.cs" />
     <Compile Include="Threading\EggTimer.cs" />
     <Compile Include="Threading\IClicker.cs" />
     <Compile Include="Threading\IComplicatedClicker.cs" />
     <Compile Include="Threading\IWaitableClicker.cs" />
-    <Compile Include="Threading\LockHog.cs" />
+    <Compile Include="Threading\MonitorHog.cs" />
     <Compile Include="Threading\LongWaitCounter.cs" />
     <Compile Include="Threading\Parallel\ActionEventPair.cs" />
     <Compile Include="Threading\Parallel\EventPair.cs" />
@@ -132,15 +139,14 @@
     <Compile Include="Threading\Parallel\PublicFuncEvent.cs" />
     <Compile Include="Threading\Parallel\WaitHandleRegestered.cs" />
     <Compile Include="Threading\FencedReferenceValueContainer.cs" />
-    <Compile Include="Threading\LockingLazyObject.cs" />
-    <Compile Include="Threading\ConcurrentValueContainer.cs" />
+    <Compile Include="Threading\MonitorLazyObject.cs" />
+    <Compile Include="Threading\SpinValueContainer.cs" />
     <Compile Include="Items\Nodes\ISinglePathNode.cs" />
     <Compile Include="Items\Nodes\LinerValueSet.cs" />
     <Compile Include="Items\Nodes\SinglePathNode.cs" />
     <Compile Include="DANGERAttribute.cs" />
     <Compile Include="Data\IConnectionAndCommandManager.cs" />
     <Compile Include="EscapeSequenceHelper.cs" />
-    <Compile Include="Threading\FencedValueContainer.cs" />
     <Compile Include="IHasText.cs" />
     <Compile Include="ILabelled.cs" />
     <Compile Include="IReadonlyHaveName.cs" />
@@ -151,7 +157,7 @@
     <Compile Include="Threading\AccessIndication\AccessIndicatorInternals.cs" />
     <Compile Include="Threading\AccessIndication\AccessHandler.cs" />
     <Compile Include="ReferenceValueContainer.cs" />
-    <Compile Include="Threading\LockingList.cs" />
+    <Compile Include="Threading\MonitorList.cs" />
     <Compile Include="Threading\ReferenceConcurrentValueContainer.cs" />
     <Compile Include="Threading\SubThreading\AbstractBaseThreadWorker.cs" />
     <Compile Include="Threading\SubThreading\BaseIsolatedInt32WaitForSingleObject.cs" />
@@ -244,7 +250,7 @@
     <Compile Include="Text\StringCache.cs" />
     <Compile Include="Text\StringCopier.cs" />
     <Compile Include="Text\StringIndexComparer.cs" />
-    <Compile Include="Threading\FencedContainer.cs" />
+    <Compile Include="Threading\FencedValueContainer.cs" />
     <Compile Include="Threading\FencedRefContainer.cs" />
     <Compile Include="VersionAttribute.cs" />
     <Compile Include="W3Etc\BaseElement.cs" />
@@ -275,10 +281,6 @@
     <Compile Include="CoreComponentsEnumsDelegatesEtc.cs" />
     <Compile Include="Data\ConnectionAndCommandManager.cs" />
     <Compile Include="Data\ParameterChache.cs" />
-    <None Include="Threading\SubThreading\AsyncExecution\NonSerialExecutor.cs" />
-    <None Include="Threading\SubThreading\AsyncExecution\BaseAsyncExecutor.cs" />
-    <None Include="Threading\SubThreading\AsyncExecution\IAsyncExecutor.cs" />
-    <None Include="Threading\SubThreading\AsyncExecution\IAsyncExecutorWithResult.cs" />
     <Compile Include="GuardedAttribute.cs" />
     <Compile Include="IHasName.cs" />
     <Compile Include="Reflect\IInvocationEntry.cs" />
@@ -328,7 +330,7 @@
     <Compile Include="EscapeSequences.cs" />
     <Compile Include="Reflect\AssemblyVersionInfoAsText.cs" />
     <Compile Include="Threading\BaseInterThreadStorageWatcher.cs" />
-    <Compile Include="Threading\BaseLockingQueueContainer.cs" />
+    <Compile Include="Threading\BaseMonitorQueueContainer.cs" />
     <Compile Include="Threading\ConcurrentState.cs" />
     <Compile Include="Text\Documents\FontString.cs" />
     <Compile Include="Text\Documents\IndexedDocumentEvent.cs" />
@@ -350,20 +352,20 @@
     <None Include="ToBeFixed\TryExecute.cs" />
     <Compile Include="Threading\IInputOutputQueue.cs" />
     <Compile Include="Threading\IState.cs" />
-    <Compile Include="Threading\LockingAsynchronousInputOutput.cs" />
-    <Compile Include="Threading\LockingInputQueueContainer.cs" />
-    <Compile Include="Threading\SubThreading\LockingIsolatedAppDomain.cs" />
-    <Compile Include="Threading\SubThreading\LockingIsolatedServerTimer.cs" />
-    <Compile Include="Threading\SubThreading\LockingIsolatedTask.cs" />
-    <Compile Include="Threading\SubThreading\LockingIsolatedThread.cs" />
-    <Compile Include="Threading\SubThreading\LockingIsolatedTimer.cs" />
-    <Compile Include="Threading\LockingOutputQueueContainer.cs" />
-    <Compile Include="Threading\LockingReadOnlyState.cs" />
-    <Compile Include="Threading\LockingState.cs" />
+    <Compile Include="Threading\MonitorAsynchronousInputOutput.cs" />
+    <Compile Include="Threading\MonitorInputQueueContainer.cs" />
+    <Compile Include="Threading\SubThreading\MonitorIsolatedAppDomain.cs" />
+    <Compile Include="Threading\SubThreading\MonitorIsolatedServerTimer.cs" />
+    <Compile Include="Threading\SubThreading\MonitorIsolatedTask.cs" />
+    <Compile Include="Threading\SubThreading\MonitorIsolatedThread.cs" />
+    <Compile Include="Threading\SubThreading\MonitorIsolatedTimer.cs" />
+    <Compile Include="Threading\MonitorOutputQueueContainer.cs" />
+    <Compile Include="Threading\MonitorReadOnlyState.cs" />
+    <Compile Include="Threading\MonitorState.cs" />
     <None Include="Threading\SubThreading\Work\Old\BaseInputOutputTaskExecutor.cs" />
     <Compile Include="Threading\IAsynchronousInputOutput.cs" />
     <None Include="Threading\SubThreading\Work\Old\IInputOutputWorkContainer.cs" />
-    <Compile Include="Threading\SubThreading\LockingVariableIsolatedThread.cs" />
+    <Compile Include="Threading\SubThreading\MonitorVariableIsolatedThread.cs" />
     <Compile Include="Threading\ThreadingExtensionMethods.cs" />
     <Compile Include="Threading\SubThreading\Work\IIsolatedWorkExecutor.cs" />
     <Compile Include="Threading\SubThreading\Work\IsolatedAppDomianExecutor.cs" />
@@ -371,7 +373,7 @@
     <Compile Include="Threading\SubThreading\Work\IsolatedTaskExecutor.cs" />
     <None Include="Threading\SubThreading\Work\Old\InputOutputWorkContainer.cs" />
     <Compile Include="Threading\IStateContainer.cs" />
-    <Compile Include="Threading\LockingQueueContainer.cs" />
+    <Compile Include="Threading\MonitorQueueContainer.cs" />
     <Compile Include="Threading\ConcurrentQueueContainer.cs" />
     <Compile Include="Threading\SubThreading\Work\OneAtATimeWorkContainer.cs" />
     <Compile Include="Threading\SubThreading\Work\IsolatedThreadExecutor.cs" />
@@ -428,8 +430,8 @@
     <None Include="Threading\SubThreading\Work\Old\IWorkExecution.cs" />
     <None Include="Threading\SubThreading\Work\Old\IWorkExecutor.cs" />
     <None Include="Threading\SubThreading\Work\Old\IInputWorkExecutor.cs" />
-    <Compile Include="Threading\LockingDictionary.cs" />
-    <Compile Include="Threading\LockingQueue.cs" />
+    <Compile Include="Threading\MonitorDictionary.cs" />
+    <Compile Include="Threading\MonitorQueue.cs" />
     <Compile Include="Threading\ConcurrentInputQueueContainer.cs" />
     <Compile Include="Threading\ConcurrentReadOnlyState.cs" />
     <Compile Include="Threading\BaseConcurrentQueueContainer.cs" />

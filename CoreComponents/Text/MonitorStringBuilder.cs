@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using CoreComponents.Text;
 
-namespace CoreComponents.Threading
+namespace CoreComponents.Text
 {
 
     public class MonitorStringBuilder : IToArray<char>, IToStringBuilder

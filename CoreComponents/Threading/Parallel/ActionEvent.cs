@@ -8,7 +8,7 @@ using System.Threading;
 namespace CoreComponents.Threading.Parallel
 {
 
-    public class ActionEvent : BaseEvent<Action>, IExecute, IDisposable
+    public class ActionEvent : BaseEvent<Action>, IExecute
     {
 
         public ActionEvent()
@@ -18,7 +18,7 @@ namespace CoreComponents.Threading.Parallel
         public void Execute()
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) => 
+            ThreadPool.QueueUserWorkItem(TheState => 
             {
 
                 try
@@ -27,7 +27,7 @@ namespace CoreComponents.Threading.Parallel
                     foreach(var Item in myItems)
                     {
 
-                        ThreadPool.QueueUserWorkItem((TheNextState) =>
+                        ThreadPool.QueueUserWorkItem(TheNextState =>
                         {
 
                             try
@@ -61,7 +61,7 @@ namespace CoreComponents.Threading.Parallel
 
     }
 
-    public class ActionEvent<T> : BaseEvent<Action<T>>, IDisposable
+    public class ActionEvent<T> : BaseEvent<Action<T>>
     {
 
         public ActionEvent()
@@ -71,7 +71,7 @@ namespace CoreComponents.Threading.Parallel
         public void Execute(T Parameter)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 try
@@ -80,7 +80,7 @@ namespace CoreComponents.Threading.Parallel
                     foreach(var Item in myItems)
                     {
 
-                        ThreadPool.QueueUserWorkItem((TheNextState) =>
+                        ThreadPool.QueueUserWorkItem(TheNextState =>
                         {
 
                             try
@@ -114,7 +114,7 @@ namespace CoreComponents.Threading.Parallel
 
     }
 
-    public class ActionEvent<T1, T2> : BaseEvent<Action<T1, T2>>, IDisposable
+    public class ActionEvent<T1, T2> : BaseEvent<Action<T1, T2>>
     {
 
         public ActionEvent()
@@ -124,7 +124,7 @@ namespace CoreComponents.Threading.Parallel
         public void Execute(T1 P1, T2 P2)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 try
@@ -133,13 +133,119 @@ namespace CoreComponents.Threading.Parallel
                     foreach(var Item in myItems)
                     {
 
-                        ThreadPool.QueueUserWorkItem((TheNextState) =>
+                        ThreadPool.QueueUserWorkItem(TheNextState =>
                         {
 
                             try
                             {
 
                                 Item(P1, P2);
+
+                            }
+                            catch(Exception e)
+                            {
+
+                                Exception = e;
+
+                            }
+
+                        });
+
+                    }
+
+                }
+                catch(Exception e)
+                {
+
+                    Exception = e;
+
+                }
+
+            });
+
+        }
+
+    }
+
+    public class ActionEvent<T1, T2, T3> : BaseEvent<Action<T1, T2, T3>>
+    {
+
+        public ActionEvent()
+        {
+        }
+
+        public void Execute(T1 P1, T2 P2, T3 P3)
+        {
+
+            ThreadPool.QueueUserWorkItem(TheState =>
+            {
+
+                try
+                {
+
+                    foreach(var Item in myItems)
+                    {
+
+                        ThreadPool.QueueUserWorkItem(TheNextState =>
+                        {
+
+                            try
+                            {
+
+                                Item(P1, P2, P3);
+
+                            }
+                            catch(Exception e)
+                            {
+
+                                Exception = e;
+
+                            }
+
+                        });
+
+                    }
+
+                }
+                catch(Exception e)
+                {
+
+                    Exception = e;
+
+                }
+
+            });
+
+        }
+
+    }
+
+    public class ActionEvent<T1, T2, T3, T4> : BaseEvent<Action<T1, T2, T3, T4>>
+    {
+
+        public ActionEvent()
+        {
+        }
+
+        public void Execute(T1 P1, T2 P2, T3 P3, T4 P4)
+        {
+
+            ThreadPool.QueueUserWorkItem(TheState =>
+            {
+
+                try
+                {
+
+                    foreach(var Item in myItems)
+                    {
+
+                        ThreadPool.QueueUserWorkItem(TheNextState =>
+                        {
+
+                            try
+                            {
+
+                                Item(P1, P2, P3, P4);
 
                             }
                             catch(Exception e)

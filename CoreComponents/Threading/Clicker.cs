@@ -6,8 +6,8 @@ using System.Threading;
 
 namespace CoreComponents.Threading
 {
-    
-    public class Clicker : IClicker
+
+    public class Clicker : IClicker, IUsesMemoryBarrier
     {
 
         protected bool myIsClicked;

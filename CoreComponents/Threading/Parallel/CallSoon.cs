@@ -18,7 +18,7 @@ namespace CoreComponents.Threading.Parallel
         public static void JustAction(Action TheAction)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 try
@@ -38,7 +38,7 @@ namespace CoreComponents.Threading.Parallel
         public static void JustAction<T1>(Action<T1> TheAction, T1 P1)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 try
@@ -58,7 +58,7 @@ namespace CoreComponents.Threading.Parallel
         public static void JustAction<T1, T2>(Action<T1, T2> TheAction, T1 P1, T2 P2)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 try
@@ -78,7 +78,7 @@ namespace CoreComponents.Threading.Parallel
         public static void JustAction<T1, T2, T3>(Action<T1, T2, T3> TheAction, T1 P1, T2 P2, T3 P3)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 try
@@ -98,7 +98,7 @@ namespace CoreComponents.Threading.Parallel
         public static void JustAction<T1, T2, T3, T4>(Action<T1, T2, T3, T4> TheAction, T1 P1, T2 P2, T3 P3, T4 P4)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 try
@@ -118,7 +118,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup(GetException TheEx, Action TheAction)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheEx.Reset();
@@ -156,7 +156,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T1>(GetException TheEx, Action<T1> TheAction, T1 P1)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheEx.Reset();
@@ -194,7 +194,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T1, T2>(GetException TheEx, Action<T1, T2> TheAction, T1 P1, T2 P2)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheEx.Reset();
@@ -232,7 +232,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T1, T2, T3>(GetException TheEx, Action<T1, T2, T3> TheAction, T1 P1, T2 P2, T3 P3)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheEx.Reset();
@@ -270,7 +270,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T1, T2, T3, T4>(GetException TheEx, Action<T1, T2, T3, T4> TheAction, T1 P1, T2 P2, T3 P3, T4 P4)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheEx.Reset();
@@ -308,7 +308,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T>(Action<T> TheAction, ConcurrentQueue<T> TheInputQueue)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 while(true)
@@ -346,7 +346,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T>(Action<T> TheAction, ConcurrentQueue<T> TheInputQueue, ConcurrentQueue<Exception> TheExceptionQueue)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 while(true)
@@ -387,7 +387,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T>(Action<T> TheAction, ConcurrentQueue<T> TheInputQueue, Action<Exception> TheExceptionAction)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 while(true)
@@ -428,7 +428,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T>(Action<T> TheAction, IOutputQueue<T> TheInputQueue, IInputQueue<Exception> TheExceptionQueue)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 while(true)
@@ -471,7 +471,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T>(GetReturnValue<T> TheRV, Func<T> TheFunc)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheRV.Reset();
@@ -507,7 +507,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T, T1>(GetReturnValue<T> TheRV, Func<T1, T> TheFunc, T1 P1)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheRV.Reset();
@@ -543,7 +543,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T, T1, T2>(GetReturnValue<T> TheRV, Func<T1, T2, T> TheFunc, T1 P1, T2 P2)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheRV.Reset();
@@ -579,7 +579,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T, T1, T2, T3>(GetReturnValue<T> TheRV, Func<T1, T2, T3, T> TheFunc, T1 P1, T2 P2, T3 P3)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheRV.Reset();
@@ -615,7 +615,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup<T, T1, T2, T3, T4>(GetReturnValue<T> TheRV, Func<T1, T2, T3, T4, T> TheFunc, T1 P1, T2 P2, T3 P3, T4 P4)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheRV.Reset();
@@ -653,7 +653,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup(GetReturnValue<object> TheRV, Delegate TheDelegate, params object[] TheParams)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheRV.Reset();
@@ -710,7 +710,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup(GetReturnValue<object> TheRV, object TheInstance, string TheMethodName, Type[] TypeParams, params object[] TheParams)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheRV.Reset();
@@ -783,7 +783,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup(GetReturnValue<object> TheRV, object TheInstance, MethodInfo TheMethodInfo, Type[] TypeParams, params object[] TheParams)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheRV.Reset();
@@ -852,7 +852,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup(GetReturnValue<object> TheRV, object TheInstance, BindingFlags TheInvokeAttr, Binder TheBinder, CultureInfo TheCulture, string TheMethodName, Type[] TypeParams, params object[] TheParams)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheRV.Reset();
@@ -925,7 +925,7 @@ namespace CoreComponents.Threading.Parallel
         public static void Setup(GetReturnValue<object> TheRV, object TheInstance, BindingFlags TheInvokeAttr, Binder TheBinder, CultureInfo TheCulture, MethodInfo TheMethodInfo, Type[] TypeParams, params object[] TheParams)
         {
 
-            ThreadPool.QueueUserWorkItem((TheState) =>
+            ThreadPool.QueueUserWorkItem(TheState =>
             {
 
                 TheRV.Reset();

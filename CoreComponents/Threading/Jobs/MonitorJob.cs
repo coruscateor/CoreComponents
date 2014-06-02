@@ -8,7 +8,7 @@ namespace CoreComponents.Threading.Jobs
 {
 
     [Serializable]
-    public abstract class Job : IJob
+    public class MonitorJob
     {
 
         protected JobState myJobState = JobState.WaitingToStart;
@@ -21,39 +21,18 @@ namespace CoreComponents.Threading.Jobs
 
         protected string myMessage;
 
-        protected SpinLock myJobStateSpinLock;
+        protected object myJobStateLockObject = new object();
 
-        protected SpinLock myCancelationRequestedSpinLock;
+        protected object myCancelationRequestedLockObject = new object();
 
-        protected SpinLock myPausalRequestedSpinLock;
+        protected object myPausalRequestedLockObject = new object();
 
-        protected SpinLock myExceptionSpinLock;
+        protected object myExceptionLockObject = new object();
 
-        protected SpinLock myMessageSpinLock;
+        protected object myMessageLockObject = new object();
 
-        protected bool myUseMemoryBarrier;
-
-        public Job()
+        public MonitorJob()
         {
-        }
-
-        public Job(bool TheUseMemoryBarrier)
-        {
-
-            myUseMemoryBarrier = TheUseMemoryBarrier;
-
-        }
-
-        public bool UseMemoryBarrier
-        {
-
-            get
-            {
-
-                return myUseMemoryBarrier;
-
-            }
-
         }
 
         public JobState State
@@ -62,21 +41,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -84,21 +52,10 @@ namespace CoreComponents.Threading.Jobs
             protected set
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     myJobState = value;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -112,21 +69,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myMessageLockObject)
                 {
-
-                    myMessageSpinLock.Enter(ref LockTaken);
 
                     return myMessage;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myMessageSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -134,21 +80,10 @@ namespace CoreComponents.Threading.Jobs
             set
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myMessageLockObject)
                 {
-
-                    myMessageSpinLock.Enter(ref LockTaken);
 
                     myMessage = value;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myMessageSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -162,21 +97,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myCancelationRequestedLockObject)
                 {
-
-                    myCancelationRequestedSpinLock.Enter(ref LockTaken);
 
                     return myCancelationRequested;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myCancelationRequestedSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -184,21 +108,10 @@ namespace CoreComponents.Threading.Jobs
             set
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myCancelationRequestedLockObject)
                 {
-
-                    myCancelationRequestedSpinLock.Enter(ref LockTaken);
 
                     myCancelationRequested = value;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myCancelationRequestedSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -212,21 +125,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState == JobState.Active;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -240,21 +142,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState == JobState.Canceled;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -268,21 +159,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState == JobState.Canceling;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -295,22 +175,11 @@ namespace CoreComponents.Threading.Jobs
 
             get
             {
-
-                bool LockTaken = false;
-
-                try
+                
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState == JobState.Completed;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -324,21 +193,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState == JobState.Failed;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -352,21 +210,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState == JobState.Paused;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -380,21 +227,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState == JobState.Waiting;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -408,21 +244,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState == JobState.WaitingForInput;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -436,21 +261,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState == JobState.WaitingToStart;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -464,21 +278,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myJobStateLockObject)
                 {
-
-                    myJobStateSpinLock.Enter(ref LockTaken);
 
                     return myJobState == JobState.Deactivated;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myJobStateSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -489,19 +292,13 @@ namespace CoreComponents.Threading.Jobs
         public void Active()
         {
 
-            bool Result;
+            lock(myJobStateLockObject)
+            {
 
-            bool LockTaken = false;
+                if(myJobState == JobState.WaitingToStart || myJobState == JobState.Waiting || myJobState == JobState.WaitingForInput || myJobState == JobState.Paused)
+                    State = JobState.Active;
 
-            myJobStateSpinLock.Enter(ref LockTaken);
-
-            Result = myJobState == JobState.WaitingToStart || myJobState == JobState.Waiting || myJobState == JobState.WaitingForInput || myJobState == JobState.Paused;
-
-            if(LockTaken)
-                myJobStateSpinLock.Exit(myUseMemoryBarrier);
-
-            if(Result)
-                State = JobState.Active;
+            }
 
         }
 
@@ -675,21 +472,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myExceptionLockObject)
                 {
-
-                    myExceptionSpinLock.Enter(ref LockTaken);
 
                     return myException;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myExceptionSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -697,21 +483,10 @@ namespace CoreComponents.Threading.Jobs
             set
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myExceptionLockObject)
                 {
-
-                    myExceptionSpinLock.Enter(ref LockTaken);
 
                     myException = value;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myExceptionSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -725,21 +500,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myExceptionLockObject)
                 {
-
-                    myExceptionSpinLock.Enter(ref LockTaken);
 
                     return myException != null;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myExceptionSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -806,21 +570,11 @@ namespace CoreComponents.Threading.Jobs
         public void RequestCancelation()
         {
 
-            bool LockTaken = false;
-
-            try
+            lock(myCancelationRequestedLockObject)
             {
-
-                myCancelationRequestedSpinLock.Enter(ref LockTaken);
 
                 if(!myCancelationRequested)
                     myCancelationRequested = true;
-
-            }
-            finally
-            {
-
-                myCancelationRequestedSpinLock.Exit(myUseMemoryBarrier);
 
             }
 
@@ -829,21 +583,11 @@ namespace CoreComponents.Threading.Jobs
         public void RequestPausal()
         {
 
-            bool LockTaken = false;
-
-            try
+            lock(myExceptionLockObject)
             {
-
-                myPausalRequestedSpinLock.Enter(ref LockTaken);
 
                 if(!myPausalRequested)
                     myPausalRequested = true;
-
-            }
-            finally
-            {
-
-                myPausalRequestedSpinLock.Exit(myUseMemoryBarrier);
 
             }
 
@@ -855,20 +599,10 @@ namespace CoreComponents.Threading.Jobs
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myPausalRequestedLockObject)
                 {
-
-                    myPausalRequestedSpinLock.Enter(ref LockTaken);
 
                     return myPausalRequested;
-
-                }
-                finally
-                {
-
-                    myPausalRequestedSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
@@ -876,20 +610,10 @@ namespace CoreComponents.Threading.Jobs
             set
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myPausalRequestedLockObject)
                 {
-
-                    myPausalRequestedSpinLock.Enter(ref LockTaken);
 
                     myPausalRequested = value;
-
-                }
-                finally
-                {
-
-                    myPausalRequestedSpinLock.Exit(myUseMemoryBarrier);
 
                 }
 
