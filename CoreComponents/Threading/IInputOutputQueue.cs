@@ -9,7 +9,7 @@ namespace CoreComponents.Threading
     public interface IInputOutputQueue<T> : IInputQueue<T>, IOutputQueue<T> //, IEnumerable<T>
     {
         
-        bool PeekType(Type TheType);
+        bool PeekType(out Type TheType);
 
         bool PeekNextType(Action<Type> TheTypeAction);
 

@@ -44,10 +44,10 @@ namespace CoreComponents.Threading
 
         }
 
-        public void Enqueue(T item)
+        public void Enqueue(T TheItem)
         {
 
-            myQueue.Enqueue(item);
+            myQueue.Enqueue(TheItem);
 
         }
 
@@ -65,10 +65,10 @@ namespace CoreComponents.Threading
 
         //}
 
-        public bool TryDequeue(out T result)
+        public bool TryDequeue(out T TheItem)
         {
 
-            return myQueue.TryDequeue(out result);
+            return myQueue.TryDequeue(out TheItem);
 
         }
         
@@ -97,7 +97,7 @@ namespace CoreComponents.Threading
 
             T Result;
 
-            if (myQueue.TryPeek(out Result))
+            if(myQueue.TryPeek(out Result))
             {
 
                 TheTypeAction(Result.GetType());
@@ -115,7 +115,7 @@ namespace CoreComponents.Threading
 
             T Result;
 
-            if (myQueue.TryPeek(out Result))
+            if(myQueue.TryPeek(out Result))
                 return typeof(TType) == Result.GetType();
 
             return false;
@@ -127,18 +127,13 @@ namespace CoreComponents.Threading
 
             T Result;
 
-            if (myQueue.TryPeek(out Result))
+            if(myQueue.TryPeek(out Result))
                 return TheType == Result.GetType();
 
             return false;
 
         }
-
-
-        public bool PeekType(Type TheType)
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 
 }

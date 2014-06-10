@@ -70,6 +70,11 @@
     <Compile Include="NullTolerantAttribute.cs" />
     <Compile Include="Overflows.cs" />
     <Compile Include="Percentage.cs" />
+    <Compile Include="Properties\Settings3.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="ReadonlyCouldBeNull.cs" />
     <Compile Include="ReadonlyValueContainer.cs" />
     <Compile Include="Safety.cs" />
@@ -110,7 +115,13 @@
     <Compile Include="Threading\IUsesMemoryBarrier.cs" />
     <Compile Include="Threading\IWaitable.cs" />
     <Compile Include="Threading\IWaitableValueContainer.cs" />
+    <Compile Include="Threading\Jobs\IQuickJob.cs" />
+    <Compile Include="Threading\Jobs\IQuickValueJob.cs" />
     <Compile Include="Threading\Jobs\MonitorJob.cs" />
+    <Compile Include="Threading\Jobs\QuickCurrentJob.cs" />
+    <Compile Include="Threading\Jobs\QuickJob.cs" />
+    <Compile Include="Threading\Jobs\QuickJobState.cs" />
+    <Compile Include="Threading\Jobs\QuickValueJob.cs" />
     <Compile Include="Threading\MonitorValueContainer.cs" />
     <Compile Include="Threading\QuickInputOutputMessage.cs" />
     <Compile Include="Threading\SpinWaitableValueContainer.cs" />
@@ -198,6 +209,7 @@
     <Compile Include="Threading\WaitableClicker.cs" />
     <Compile Include="Threading\WaitCounter.cs" />
     <Compile Include="Time\TimeConversions.cs" />
+    <Compile Include="TrustMeAttribute.cs" />
     <Compile Include="ValueContainer.cs" />
     <Compile Include="IExecute.cs" />
     <Compile Include="IExecuteReturn.cs" />

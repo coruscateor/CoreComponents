@@ -95,7 +95,7 @@ namespace CoreComponents.Threading
 
         //}
         
-        public bool PeekType(Type TheType)
+        public bool PeekType(out Type TheType)
         {
 
             lock (myLockObject)
@@ -111,6 +111,8 @@ namespace CoreComponents.Threading
                 }
 
             }
+
+            TheType = null;
 
             return false;
 

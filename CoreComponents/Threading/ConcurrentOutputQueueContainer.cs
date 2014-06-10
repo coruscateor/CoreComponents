@@ -16,13 +16,6 @@ namespace CoreComponents.Threading
         {
         }
 
-        public bool TryDequeue(out TType TheItem)
-        {
-
-            return myQueue.TryDequeue(out TheItem);
-
-        }
-
     }
 
 }
