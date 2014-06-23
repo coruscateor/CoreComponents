@@ -17,83 +17,15 @@ namespace CoreComponents.Data
         where TTransaction : DbTransaction
     {
 
-        public event Action<ErrorEventArgs> Error;
-
-        public const string ConnectionSucceeded = "Connection Succeeded!";
-
-        public const string ConnectionFailed = "Connection Failed";
-
-        public const string ConnectionFailedColon = "Connection Failed:";
-
-        protected TCommand myCommand;
-
-        protected TTransaction myTransaction;
-
         protected ConnectionType myConnectionType = ConnectionType.QuickDiscrete;
 
-        protected Action myOpenAction;
+        protected IExecutor myCurrentExecutor;
 
-        protected Action myCloseAction;
+        protected QuickDiscreteExecutor<TConnection, TCommand, TParameter, TTransaction> myQuickDiscreteExecutor;
 
-        protected Func<int> myExecuteNonQueryAction;
+        protected DiscreteExecutor<TConnection, TCommand, TParameter, TTransaction> myDiscreteExecutor;
 
-        protected Func<string, int> myExecuteNonQuery;
-
-        protected Func<string, IEnumerable<object>, int> myExecuteNonQueryParameters;
-
-        protected Func<IEnumerable<object>, int> myExecuteNonQueryParametersOnly;
-
-        protected Func<DbDataReader> myExecuteReaderAction;
-
-        protected Func<string, DbDataReader> myExecuteReader;
-
-        protected Func<string, IEnumerable<object>, DbDataReader> myExecuteReaderParameters;
-
-        protected Func<IEnumerable<object>, DbDataReader> myExecuteReaderParametersOnly;
-
-        protected Func<object> myExecuteScalarAction;
-
-        protected Func<string, object> myExecuteScalar;
-
-        protected Func<string, IEnumerable<object>, object> myExecuteScalarParameters;
-
-        protected Func<IEnumerable<object>, object> myExecuteScalarParametersOnly;
-
-        protected Func<DataTable> myExecuteDataTableAction;
-
-        protected Func<string, DataTable> myExecuteDataTable;
-
-        protected Func<string, IEnumerable<object>, DataTable> myExecuteDataTableParameters;
-
-        protected Func<IEnumerable<object>, DataTable> myExecuteDataTableParametersOnly;
-
-        protected bool myIsActive;
-
-        //protected bool myIsEngaged;
-
-        protected IsolationLevel myIsolationLevel = IsolationLevel.Unspecified;
-
-        protected TransactionAction myTransactionAction = TransactionAction.Commit;
-
-        protected bool myRetainParameters;
-
-        //protected ParameterChache<TParameter> myParameterChache = new ParameterChache<TParameter>();
-
-        protected void OnError(Exception TheException)
-        {
-
-            if(TheException != null)
-                Error(new ErrorEventArgs(TheException));
-
-        }
-
-        protected void OnError(string TheMessage)
-        {
-
-            if(Error != null)
-                Error(new ErrorEventArgs(TheMessage));
-
-        }
+        protected TransactionalExecutor<TConnection, TCommand, TParameter, TTransaction> myTransactionExecutor;
 
         public ConnectionAndCommandManager()
         {
@@ -105,9 +37,7 @@ namespace CoreComponents.Data
         public ConnectionAndCommandManager(string TheConnectionString)
         {
 
-            Initalise();
-
-            myCommand.Connection.ConnectionString = TheConnectionString;
+            Initalise(TheConnectionString);
 
         }
 
@@ -129,36 +59,23 @@ namespace CoreComponents.Data
 
         }
 
-        protected void Initalise()
+        protected void Initalise(string TheConnectionString = "")
         {
 
-            myCommand = new TCommand();
+            TCommand Command = new TCommand();
 
-            myCommand.Connection = new TConnection();
+            Command.Connection = new TConnection();
 
-            SetConnectionDelegates();
+            if(TheConnectionString.Length > 0)
+                Command.Connection.ConnectionString = TheConnectionString;
 
-        }
+            myQuickDiscreteExecutor = new QuickDiscreteExecutor<TConnection, TCommand, TParameter, TTransaction>(Command);
 
-        //public void Engage()
-        //{
-        //}
+            myDiscreteExecutor = new DiscreteExecutor<TConnection, TCommand, TParameter, TTransaction>(Command);
 
-        //public void DisEngage()
-        //{
-        //}
+            myTransactionExecutor = new TransactionalExecutor<TConnection, TCommand, TParameter, TTransaction>(Command);
 
-        public void Open()
-        {
-
-            myOpenAction();
-
-        }
-
-        public void Close()
-        {
-
-            myCloseAction();
+            myCurrentExecutor = myQuickDiscreteExecutor;
 
         }
 
@@ -174,12 +91,12 @@ namespace CoreComponents.Data
             set
             {
 
-                if(!myIsActive && (myConnectionType != value))
+                if(myConnectionType != value && !myCurrentExecutor.IsActive)
                 {
 
                     myConnectionType = value;
 
-                    SetConnectionDelegates();
+                    SetConnectionExecutor();
 
                 }
 
@@ -187,7 +104,7 @@ namespace CoreComponents.Data
 
         }
 
-        protected void SetConnectionDelegates()
+        protected void SetConnectionExecutor()
         {
 
             switch(myConnectionType)
@@ -195,143 +112,38 @@ namespace CoreComponents.Data
 
                 case ConnectionType.Discrete:
 
-                    myOpenAction = DiscreteOpen;
+                    if(myCurrentExecutor == myDiscreteExecutor)
+                        return;
+                    else if(myCurrentExecutor == myTransactionExecutor && myTransactionExecutor.IsActive)
+                        myTransactionExecutor.EndTransaction();
 
-                    myCloseAction = DiscreteClose;
+                    CheckExecutor(myDiscreteExecutor);
 
-                    //ExecuteNonQuery
-
-                    myExecuteNonQueryAction = DiscreteExecuteNonQuery;
-
-                    myExecuteNonQuery = DiscreteExecuteNonQuery;
-
-                    myExecuteNonQueryParametersOnly = DiscreteExecuteNonQuery;
-
-                    myExecuteNonQueryParameters = DiscreteExecuteNonQuery;
-
-                    //ExecuteReader
-
-                    myExecuteReaderAction = DiscreteExecuteReader;
-
-                    myExecuteReader = DiscreteExecuteReader;
-
-                    myExecuteReaderParametersOnly = DiscreteExecuteReader;
-
-                    myExecuteReaderParameters = DiscreteExecuteReader;
-
-                    //ExecuteScalar
-
-                    myExecuteScalarAction = DiscreteExecuteScalar;
-
-                    myExecuteScalar = DiscreteExecuteScalar;
-
-                    myExecuteScalarParametersOnly = DiscreteExecuteScalar;
-
-                    myExecuteScalarParameters = DiscreteExecuteScalar;
-
-                    //ExecuteDataTable
-
-                    myExecuteDataTableAction = DiscreteExecuteDataTable;
-
-                    myExecuteDataTable = DiscreteExecuteDataTable;
-
-                    myExecuteDataTableParametersOnly = DiscreteExecuteDataTable;
-
-                    myExecuteDataTableParameters = DiscreteExecuteDataTable;
+                    myCurrentExecutor = myDiscreteExecutor;
 
                     break;
                 case ConnectionType.QuickDiscrete:
 
-                    myOpenAction = () => { };
+                    if(myCurrentExecutor == myQuickDiscreteExecutor)
+                        return;
+                    else if(myCurrentExecutor == myTransactionExecutor && myCurrentExecutor == myDiscreteExecutor)
+                        myCurrentExecutor.Close();
 
-                    myCloseAction = myOpenAction;
+                    CheckExecutor(myDiscreteExecutor);
 
-                    //ExecuteNonQuery
-
-                    myExecuteNonQueryAction = QuickDiscreteExecuteNonQuery;
-
-                    myExecuteNonQuery = QuickDiscreteExecuteNonQuery;
-
-                    myExecuteNonQueryParametersOnly = QuickDiscreteExecuteNonQuery;
-
-                    myExecuteNonQueryParameters = QuickDiscreteExecuteNonQuery;
-
-                    //ExecuteReader
-
-                    myExecuteReaderAction = QuickDiscreteExecuteReader;
-
-                    myExecuteReader = QuickDiscreteExecuteReader;
-
-                    myExecuteReaderParametersOnly = QuickDiscreteExecuteReader;
-
-                    myExecuteReaderParameters = QuickDiscreteExecuteReader;
-
-                    //ExecuteScalar
-
-                    myExecuteScalarAction = QuickDiscreteExecuteScalar;
-
-                    myExecuteScalar = QuickDiscreteExecuteScalar;
-
-                    myExecuteScalarParametersOnly = QuickDiscreteExecuteScalar;
-
-                    myExecuteScalarParameters = QuickDiscreteExecuteScalar;
-
-                    //ExecuteDataTable
-
-                    myExecuteDataTableAction = QuickDiscreteExecuteDataTable;
-
-                    myExecuteDataTable = QuickDiscreteExecuteDataTable;
-
-                    myExecuteDataTableParametersOnly = QuickDiscreteExecuteDataTable;
-
-                    myExecuteDataTableParameters = QuickDiscreteExecuteDataTable;
+                    myCurrentExecutor = myDiscreteExecutor;
 
                     break;
                 case ConnectionType.Transactional:
 
-                    myOpenAction = TransactionalOpen;
+                    if(myCurrentExecutor == myTransactionExecutor)
+                        return;
+                    else if(myCurrentExecutor == myDiscreteExecutor && myDiscreteExecutor.IsActive)
+                        myTransactionExecutor.BeginTransaction();
 
-                    myCloseAction = TransactionalClose;
+                    CheckExecutor(myTransactionExecutor);
 
-                    //ExecuteNonQuery
-
-                    myExecuteNonQueryAction = TransactionalExecuteNonQuery;
-
-                    myExecuteNonQuery = TransactionalExecuteNonQuery;
-
-                    myExecuteNonQueryParametersOnly = TransactionalExecuteNonQuery;
-
-                    myExecuteNonQueryParameters = TransactionalExecuteNonQuery;
-
-                    //ExecuteReader
-
-                    myExecuteReaderAction = TransactionalExecuteReader;
-
-                    myExecuteReader = TransactionalExecuteReader;
-
-                    myExecuteReaderParametersOnly = TransactionalExecuteReader;
-
-                    myExecuteReaderParameters = TransactionalExecuteReader;
-
-                    //ExecuteScalar
-
-                    myExecuteScalarAction = TransactionalExecuteScalar;
-
-                    myExecuteScalar = TransactionalExecuteScalar;
-
-                    myExecuteScalarParametersOnly = TransactionalExecuteScalar;
-
-                    myExecuteScalarParameters = TransactionalExecuteScalar;
-
-                    //ExecuteDataTable
-
-                    myExecuteDataTableAction = TransactionalExecuteDataTable;
-
-                    myExecuteDataTable = TransactionalExecuteDataTable;
-
-                    myExecuteDataTableParametersOnly = TransactionalExecuteDataTable;
-
-                    myExecuteDataTableParameters = TransactionalExecuteDataTable;
+                    myCurrentExecutor = myTransactionExecutor;
 
                     break;
 
@@ -339,23 +151,13 @@ namespace CoreComponents.Data
 
         }
 
-        //public TConnection Connection
-        //{
+        protected void CheckExecutor(IExecutor TheExecutor)
+        {
 
-        //    get
-        //    {
+            if(TheExecutor.RetainParameters != myQuickDiscreteExecutor.RetainParameters)
+                TheExecutor.RetainParameters = myQuickDiscreteExecutor.RetainParameters;
 
-        //        return (TConnection)myCommand.Connection;
-
-        //    }
-        //    set
-        //    {
-
-        //        myCommand.Connection = (TConnection)value;
-        //        //myCommand.Connection.
-        //    }
-
-        //}
+        }
 
         public string ConnectionString
         {
@@ -363,18 +165,13 @@ namespace CoreComponents.Data
             get
             {
 
-                return myCommand.Connection.ConnectionString;
+                return myCurrentExecutor.ConnectionString;
 
             }
             set
             {
 
-                //if (!myIsActive)
-                //{
-
-                myCommand.Connection.ConnectionString = value;
-
-                //}
+                myCurrentExecutor.ConnectionString = value;
 
             }
 
@@ -386,18 +183,13 @@ namespace CoreComponents.Data
             get
             {
 
-                return myCommand.Connection.Database;
+                return myCurrentExecutor.Database;
 
             }
             set
             {
 
-                if(myIsActive)
-                {
-
-                    myCommand.Connection.ChangeDatabase(value);
-
-                }
+                myCurrentExecutor.Database = value;
 
             }
 
@@ -409,7 +201,7 @@ namespace CoreComponents.Data
             get
             {
 
-                return myCommand.Connection.DataSource;
+                return myCurrentExecutor.DataSource;
 
             }
 
@@ -421,7 +213,7 @@ namespace CoreComponents.Data
             get
             {
 
-                return myCommand.Connection.ServerVersion;
+                return myCurrentExecutor.ServerVersion;
 
             }
 
@@ -433,7 +225,7 @@ namespace CoreComponents.Data
             get
             {
 
-                return myCommand.Connection.State;
+                return myCurrentExecutor.ConnectionState;
 
             }
 
@@ -445,7 +237,7 @@ namespace CoreComponents.Data
             get
             {
 
-                return myIsActive;
+                return myCurrentExecutor.IsActive;
 
             }
 
@@ -457,9 +249,7 @@ namespace CoreComponents.Data
             get
             {
 
-                ConnectionState State = myCommand.Connection.State;
-
-                return State == ConnectionState.Open || State == ConnectionState.Connecting || State == ConnectionState.Executing || State == ConnectionState.Fetching;
+                return myCurrentExecutor.ConnectionIsActive;
 
             }
 
@@ -471,250 +261,7 @@ namespace CoreComponents.Data
             get
             {
 
-                return myConnectionType == ConnectionType.Discrete;
-
-            }
-
-        }
-
-        public bool TestConnection()
-        {
-
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.Connection.Open();
-
-                }
-                catch
-                {
-
-                    return false;
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return true;
-
-        }
-
-        public bool TestConnectionGetError()
-        {
-
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.Connection.Open();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                    return false;
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return true;
-
-        }
-
-        public string TestConnectionVerbose(bool RecordStackTrace = false)
-        {
-
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.Connection.Open();
-
-                }
-                catch(Exception e)
-                {
-
-                    StringBuilder SB = new StringBuilder();
-
-                    SB.AppendLine(ConnectionFailedColon);
-
-                    SB.AppendLine();
-
-                    SB.AppendLine(e.Message);
-
-                    if(RecordStackTrace)
-                    {
-
-                        SB.AppendLine();
-
-                        SB.AppendLine(e.StackTrace);
-
-                    }
-
-                    return SB.ToString();
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return ConnectionSucceeded;
-
-        }
-
-        public string TestConnectionVerboseAndGetError(bool RecordStackTrace = false)
-        {
-
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.Connection.Open();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                    StringBuilder SB = new StringBuilder();
-
-                    SB.AppendLine(ConnectionFailedColon);
-
-                    SB.AppendLine();
-
-                    SB.AppendLine(e.Message);
-
-                    if(RecordStackTrace)
-                    {
-
-                        SB.AppendLine();
-
-                        SB.AppendLine(e.StackTrace);
-
-                    }
-
-                    return SB.ToString();
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return ConnectionSucceeded;
-
-        }
-
-        public int ConnectionTimeout
-        {
-
-            get
-            {
-
-                return myCommand.Connection.ConnectionTimeout;
-
-            }
-
-        }
-
-        public int CommandTimeout
-        {
-
-            get
-            {
-
-                return myCommand.CommandTimeout;
-
-            }
-            set
-            {
-
-                if(!myIsActive)
-                {
-
-                    myCommand.CommandTimeout = value;
-
-                }
-
-            }
-
-        }
-
-        public void Prepare()
-        {
-
-            myCommand.Prepare();
-
-        }
-
-        public CommandType CommandType
-        {
-
-            get
-            {
-
-                return myCommand.CommandType;
-
-            }
-            set
-            {
-
-                if(!myIsActive)
-                {
-
-                    myCommand.CommandType = value;
-
-                }
+                return myConnectionType != ConnectionType.QuickDiscrete;
 
             }
 
@@ -726,18 +273,13 @@ namespace CoreComponents.Data
             get
             {
 
-                return myIsolationLevel;
+                return myTransactionExecutor.IsolationLevel;
 
             }
             set
             {
 
-                if(!myIsActive)
-                {
-
-                    myIsolationLevel = value;
-
-                }
+                myTransactionExecutor.IsolationLevel = value;
 
             }
 
@@ -749,18 +291,221 @@ namespace CoreComponents.Data
             get
             {
 
-                return myTransactionAction;
+                return myTransactionExecutor.TransactionAction;
 
             }
             set
             {
 
-                if(!myIsActive)
-                {
+                myTransactionExecutor.TransactionAction = value;
 
-                    myTransactionAction = value;
+            }
 
-                }
+        }
+
+        public void Prepare()
+        {
+
+            myCurrentExecutor.Prepare();
+
+        }
+
+        public IEnumerable<object> ParameterValues
+        {
+
+            get
+            {
+
+                return myCurrentExecutor.ParameterValues;
+
+            }
+            set
+            {
+
+                myCurrentExecutor.ParameterValues = value;
+
+            }
+
+        }
+
+        public void ClearParameters()
+        {
+            
+            myCurrentExecutor.ClearParameters();
+
+        }
+
+        public bool RetainParameters
+        {
+
+            get
+            {
+                
+                return myCurrentExecutor.RetainParameters;
+
+            }
+            set
+            {
+
+                myCurrentExecutor.RetainParameters = value;
+
+            }
+
+        }
+
+        public void SetParameters(IEnumerable<KeyValuePair<string, object>> TheParameters)
+        {
+
+            myCurrentExecutor.SetParameters(TheParameters);
+
+        }
+
+        public void SetParameters(dynamic TheParameters)
+        {
+
+            myCurrentExecutor.SetParameters(TheParameters);
+
+        }
+
+        public IEnumerable<KeyValuePair<string, object>> GetParameterNamesAndValues()
+        {
+
+            return myCurrentExecutor.GetParameterNamesAndValues();
+
+        }
+
+        public void GetParameterNamesAndValuesInto(ref ICollection<KeyValuePair<string, object>> TheParameterSet)
+        {
+
+            myCurrentExecutor.GetParameterNamesAndValuesInto(ref TheParameterSet);
+
+        }
+
+        public void GetParameterNamesAndValuesInto(ref IDictionary<string, object> TheParameterSet)
+        {
+
+            myCurrentExecutor.GetParameterNamesAndValuesInto(ref TheParameterSet);
+
+        }
+
+        public bool HasParameterWithName(string TheName)
+        {
+
+            return myCurrentExecutor.HasParameterWithName(TheName);
+
+        }
+
+        public bool HasParameterWithValue(string TheValue)
+        {
+
+            return myCurrentExecutor.HasParameterWithValue(TheValue);
+
+        }
+
+        public object GetValueOfParameter(string TheName)
+        {
+
+            return myCurrentExecutor.GetValueOfParameter(TheName);
+
+        }
+
+        public bool TryGetValueOfParameter(string TheName, out object TheValue)
+        {
+
+            return myCurrentExecutor.TryGetValueOfParameter(TheName, out TheValue);
+
+        }
+
+        public bool HasParameters
+        {
+
+            get
+            {
+
+                return myCurrentExecutor.HasParameters;
+
+            }
+
+        }
+
+        public void Open()
+        {
+
+            myCurrentExecutor.Open();
+
+        }
+
+        public void Close()
+        {
+
+            myCurrentExecutor.Close();
+
+        }
+
+        public bool TestConnection()
+        {
+
+            return myCurrentExecutor.TestConnection();
+
+        }
+
+        public bool TestConnection(out Exception TheException)
+        {
+
+            return myCurrentExecutor.TestConnection(out TheException);
+
+        }
+
+        public bool TestConnection(out string TheMessage)
+        {
+
+            return myCurrentExecutor.TestConnection(out TheMessage);
+
+        }
+
+        public int ConnectionTimeout
+        {
+
+            get
+            {
+
+                return myCurrentExecutor.ConnectionTimeout;
+
+            }
+
+        }
+
+        public int CommandTimeout
+        {
+
+            get
+            {
+
+                return myCurrentExecutor.CommandTimeout;
+
+            }
+            set
+            {
+
+                myCurrentExecutor.CommandTimeout = value;
+
+            }
+
+        }
+
+        public CommandType CommandType
+        {
+
+            get
+            {
+
+                return myCurrentExecutor.CommandType;
+
+            }
+            set
+            {
+
+                myCurrentExecutor.CommandType = value;
 
             }
 
@@ -772,502 +517,57 @@ namespace CoreComponents.Data
             get
             {
 
-                return myCommand.CommandText;
+                return myCurrentExecutor.CommandText;
 
             }
             set
             {
 
-                myCommand.CommandText = value;
+                myCurrentExecutor.CommandText = value;
 
             }
 
         }
 
-        public void SetCommandText(StringBuilder SB)
+        public void SetCommandText(object TheCommandObject)
         {
 
-            myCommand.CommandText = SB.ToString();
-
-        }
-
-        public IEnumerable<object> ParameterValues
-        {
-
-            get
-            {
-
-                if(myCommand.Parameters.Count > 0)
-                {
-
-                    object[] Items = new object[myCommand.Parameters.Count];
-
-                    for(int i = 0; i < myCommand.Parameters.Count; i++)
-                    {
-
-                        Items[i] = myCommand.Parameters[i].Value;
-
-                    }
-
-                    return Items;
-
-                }
-
-                return new object[0];
-
-            }
-            set
-            {
-
-                SetParameterValues(value);
-
-            }
-
-        }
-
-        public void ClearParameters()
-        {
-
-            if(myCommand.Parameters.Count > 0)
-            {
-
-                myCommand.Parameters.Clear();
-
-            }
-
-            //myParameterChache.Clear(myCommand.Parameters);
-
-        }
-
-        protected void ResetParameters()
-        {
-
-            if(!myRetainParameters)
-            {
-
-                ClearParameters();
-
-                //myParameterChache.Clear(myCommand.Parameters);
-
-            }
-
-        }
-
-        public bool RetainParameters
-        {
-
-            get
-            {
-
-                return myRetainParameters;
-
-            }
-            set
-            {
-
-                if(!myIsActive)
-                {
-
-                    myRetainParameters = value;
-
-                }
-
-            }
-
-        }
-
-        public void SetParameterValues(IEnumerable<object> TheParameters)
-        {
-
-            ClearParameters();
-
-            foreach(object Item in TheParameters)
-            {
-
-                TParameter NewParameter = new TParameter();
-
-                NewParameter.Value = Item;
-
-                myCommand.Parameters.Add(NewParameter);
-
-            }
-
-            //if (TheParameters != null)
-            //{
-
-            //    List<object> Items = new List<object>();
-
-            //    foreach (object Item in TheParameters)
-            //    {
-
-            //        Items.Add(Item);
-
-            //    }
-
-            //    if (Items.Count > myCommand.Parameters.Count)
-            //    {
-
-            //        int Difference = Items.Count - myCommand.Parameters.Count;
-
-            //        myParameterChache.FetchInto(myCommand.Parameters, Difference);
-
-            //    }
-            //    else if (Items.Count < myCommand.Parameters.Count)
-            //    {
-
-            //        int Difference = myCommand.Parameters.Count - Items.Count;
-
-            //        myParameterChache.RetriveFrom(myCommand.Parameters, Difference);
-
-            //    }
-
-            //    for (int i = 0; i < Items.Count; i++)
-            //    {
-
-            //        myCommand.Parameters[i].Value = Items[i];
-
-            //    }
-
-            //}
-            //else
-            //{
-
-            //    myParameterChache.Clear(myCommand.Parameters);
-
-            //}
-
-        }
-
-        public void SetParameterValuesParams(params object[] TheParameters)
-        {
-
-            SetParameterValues(TheParameters);
-
-        }
-
-        public void SetParameterNamesAndValues(IEnumerable<KeyValuePair<string, object>> TheParameters)
-        {
-
-            if(!myIsActive)
-            {
-
-                ClearParameters();
-
-                foreach(KeyValuePair<string, object> Item in TheParameters)
-                {
-
-                    TParameter NewParameter = new TParameter();
-
-                    NewParameter.Value = Item.Value;
-
-                    NewParameter.ParameterName = Item.Key;
-
-                    myCommand.Parameters.Add(NewParameter);
-
-                }
-
-                //Queue<KeyValuePair<string, object>> myParameterQueue = new Queue<KeyValuePair<string, object>>(TheParameterDetails);
-
-                //KeyValuePair<string, object> NewItemValues;
-
-                //if (myCommand.Parameters.Count > myParameterQueue.Count)
-                //{
-
-                //    myParameterChache.RetriveFrom(myCommand.Parameters, myCommand.Parameters.Count - myParameterQueue.Count);
-
-                //}
-
-                //foreach (DbParameter Item in myCommand.Parameters)
-                //{
-
-                //    NewItemValues = myParameterQueue.Dequeue();
-
-                //    Item.ParameterName = NewItemValues.Key;
-
-                //    Item.Value = NewItemValues.Value;
-
-                //}
-
-                //if (myParameterQueue.Count > 0)
-                //{
-
-                //    for (int i = myParameterQueue.Count; i > 0; i--)
-                //    {
-
-                //        NewItemValues = myParameterQueue.Dequeue();
-
-                //        myCommand.Parameters.Add(myParameterChache.Fetch(NewItemValues.Value, NewItemValues.Key));
-
-                //    }
-
-                //}
-
-            }
-
-        }
-
-        public void SetParameterNamesAndValuesParams(params KeyValuePair<string, object>[] TheParameters)
-        {
-
-            SetParameterNamesAndValues(TheParameters);
-
-        }
-
-        public IEnumerable<KeyValuePair<string, object>> GetParameterNamesAndValues()
-        {
-
-            Queue<KeyValuePair<string, object>> myParameterQueue = new Queue<KeyValuePair<string, object>>();
-
-            foreach(DbParameter Item in myCommand.Parameters)
-            {
-
-                myParameterQueue.Enqueue(new KeyValuePair<string, object>(Item.ParameterName, Item.Value));
-
-            }
-
-            return myParameterQueue;
-
-        }
-
-        public void GetParameterNamesAndValuesInto(ICollection<KeyValuePair<string, object>> TheParameterSet)
-        {
-
-            foreach(DbParameter Item in myCommand.Parameters)
-            {
-
-                TheParameterSet.Add(new KeyValuePair<string, object>(Item.ParameterName, Item.Value));
-
-            }
-
-        }
-
-        public void GetParameterNamesAndValuesInto(IDictionary<string, object> TheParameterSet)
-        {
-
-            foreach(DbParameter Item in myCommand.Parameters)
-            {
-
-                TheParameterSet.Add(Item.ParameterName, Item.Value);
-
-            }
-
-        }
-
-        public bool HasParameterWithName(string TheName)
-        {
-
-            return myCommand.Parameters.Contains(TheName);
-
-        }
-
-        public bool HasParameterWithValue(string TheValue)
-        {
-
-            return myCommand.Parameters.Contains(TheValue);
-
-        }
-
-        public object GetValueOfParameter(string TheName)
-        {
-
-            if(myCommand.Parameters.Contains(TheName))
-            {
-
-                return myCommand.Parameters[TheName].Value;
-
-            }
-
-            return null;
-
-        }
-
-        public bool HasParameters
-        {
-
-            get
-            {
-
-                return myCommand.Parameters.Count > 0;
-
-            }
-
-        }
-
-        protected DataTable GetDataTable(DbDataReader TheDbDataReader)
-        {
-
-            DataTable DT = new DataTable();
-
-            if(TheDbDataReader.HasRows && !TheDbDataReader.IsClosed)
-            {
-
-                //if (TheDbDataReader.Read())
-                //{
-
-                object[] Values; // = null;
-
-                int NumberOfRows = TheDbDataReader.FieldCount;
-
-                //object[] Values = new object[NumberOfRows]();
-
-                for(int i = 0; i < NumberOfRows; i++)
-                {
-
-                    DT.Columns.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetFieldType(i));
-
-                }
-
-                //TheDbDataReader.GetValues(Values);
-
-                //DT.Rows.Add(Values);
-
-                while(TheDbDataReader.Read())
-                {
-
-                    Values = new object[NumberOfRows];
-
-                    TheDbDataReader.GetValues(Values);
-
-                    DT.Rows.Add(Values);
-
-                }
-
-                //}
-
-            }
-
-            TheDbDataReader.Close();
-
-            //TheDbDataReader.Dispose();
-
-            return DT;
+            myCurrentExecutor.CommandText = TheCommandObject.ToString();
 
         }
 
         public int ExecuteNonQuery()
         {
 
-            return myExecuteNonQueryAction();
-
-        }
-
-        public int ExecuteNonQuery(Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteNonQueryAction();
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteNonQuery();
 
         }
 
         public int ExecuteNonQuery(string TheCommand)
         {
 
-            return myExecuteNonQuery(TheCommand);
+            return myCurrentExecutor.ExecuteNonQuery(TheCommand);
 
         }
 
-        public int ExecuteNonQuery(string TheCommand, Stopwatch TheStopWatch)
+        public int ExecuteNonQuery(object TheCommandObject)
         {
 
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteNonQuery(TheCommand);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        public int ExecuteNonQuery(StringBuilder TheCommandStringBuilder)
-        {
-
-            return myExecuteNonQuery(TheCommandStringBuilder.ToString());
-
-        }
-
-        public int ExecuteNonQuery(StringBuilder TheCommandStringBuilder, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteNonQuery(TheCommandStringBuilder.ToString());
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteNonQuery(TheCommandObject.ToString());
 
         }
 
         public int ExecuteNonQuery(IEnumerable<object> TheParameters)
         {
 
-            return myExecuteNonQueryParametersOnly(TheParameters);
-
-        }
-
-        public int ExecuteNonQuery(IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteNonQueryParametersOnly(TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteNonQuery(TheParameters);
 
         }
 
         //public int ExecuteNonQuery(IEnumerable<KeyValuePair<string, object>> TheParameters)
         //{
 
-        //    //return myExecuteNonQueryParameters(TheCommandStringBuilder.ToString(), TheParameters);
+        //    //return myExecuteNonQueryParameters(TheCommandObject.ToString(), TheParameters);
 
         //    return 0;
 
@@ -1276,76 +576,30 @@ namespace CoreComponents.Data
         public int ExecuteNonQuery(string TheCommand, IEnumerable<object> TheParameters)
         {
 
-            return myExecuteNonQueryParameters(TheCommand, TheParameters);
-
-        }
-
-        public int ExecuteNonQuery(string TheCommand, IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteNonQueryParameters(TheCommand, TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteNonQuery(TheCommand, TheParameters);
 
         }
 
         //public int ExecuteNonQuery(string TheCommand, IEnumerable<KeyValuePair<string, object>> TheParameters)
         //{
 
-        //    //return myExecuteNonQueryParameters(TheCommandStringBuilder.ToString(), TheParameters);
+        //    //return myExecuteNonQueryParameters(TheCommandObject.ToString(), TheParameters);
 
         //    return 0;
 
         //}
 
-        public int ExecuteNonQuery(StringBuilder TheCommandStringBuilder, IEnumerable<object> TheParameters)
+        public int ExecuteNonQuery(object TheCommandObject, IEnumerable<object> TheParameters)
         {
 
-            return myExecuteNonQueryParameters(TheCommandStringBuilder.ToString(), TheParameters);
+            return myCurrentExecutor.ExecuteNonQuery(TheCommandObject.ToString(), TheParameters);
 
         }
 
-        public int ExecuteNonQuery(StringBuilder TheCommandStringBuilder, IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteNonQueryParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        //public int ExecuteNonQuery(StringBuilder TheCommandStringBuilder, IEnumerable<KeyValuePair<string, object>> TheParameters)
+        //public int ExecuteNonQuery(Object TheCommandObject, IEnumerable<KeyValuePair<string, object>> TheParameters)
         //{
 
-        //    //return myExecuteNonQueryParameters(TheCommandStringBuilder.ToString(), TheParameters);
+        //    //return myExecuteNonQueryParameters(TheCommandObject.ToString(), TheParameters);
 
         //    return 0;
 
@@ -1356,286 +610,111 @@ namespace CoreComponents.Data
         public int ExecuteNonQueryParamsOnly(params object[] TheParameters)
         {
 
-            return myExecuteNonQueryParametersOnly(TheParameters);
-
-        }
-
-        public int ExecuteNonQueryTimedParamsOnly(Stopwatch TheStopWatch, params object[] TheParameters)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteNonQueryParametersOnly(TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteNonQuery(TheParameters);
 
         }
 
         public int ExecuteNonQueryParams(string TheCommand, params object[] TheParameters)
         {
 
-            return myExecuteNonQueryParameters(TheCommand, TheParameters);
+            return myCurrentExecutor.ExecuteNonQuery(TheParameters);
 
         }
 
-        public int ExecuteNonQueryTimedParams(string TheCommand, Stopwatch TheStopWatch, params object[] TheParameters)
+        public int ExecuteNonQueryParams(object TheCommandObject, params object[] TheParameters)
         {
 
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteNonQueryParametersOnly(TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteNonQuery(TheCommandObject.ToString(), TheParameters);
 
         }
 
-        public int ExecuteNonQueryParams(StringBuilder TheCommandStringBuilder, params object[] TheParameters)
-        {
-
-            return myExecuteNonQueryParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-        }
-
-        public int ExecuteNonQueryTimedParams(StringBuilder TheCommandStringBuilder, Stopwatch TheStopWatch, params object[] TheParameters)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteNonQueryParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        //public int ExecuteNonQueryParams(StringBuilder TheCommandStringBuilder, params KeyValuePair<string, object>[] TheParameters)
+        //public int ExecuteNonQueryParams(Object TheCommandObject, params KeyValuePair<string, object>[] TheParameters)
         //{
 
-        //    return myExecuteNonQueryParameters(TheCommandStringBuilder.ToString(), TheParameters);
+        //    return myExecuteNonQueryParameters(TheCommandObject.ToString(), TheParameters);
 
         //}
 
-        //--
+        public int ExecuteNonQuery(string TheCommand, IDictionary<string, object> TheNamedParameters)
+        {
+
+            return myCurrentExecutor.ExecuteNonQuery(TheCommand, TheNamedParameters);
+            
+        }
+
+        public int ExecuteNonQuery(object TheCommandObject, IDictionary<string, object> TheNamedParameters)
+        {
+
+            return myCurrentExecutor.ExecuteNonQuery(TheCommandObject, TheNamedParameters);
+
+        }
+
+        public int ExecuteNonQuery(string TheCommand, dynamic TheNamedParameters)
+        {
+
+            return myCurrentExecutor.ExecuteNonQuery(TheCommand, (IDictionary<string, object>)TheNamedParameters);
+
+        }
+
+        public int ExecuteNonQuery(object TheCommandObject, dynamic TheNamedParameters)
+        {
+
+            return myCurrentExecutor.ExecuteNonQuery(TheCommandObject, (IDictionary<string, object>)TheNamedParameters);
+
+        }
 
         public DbDataReader ExecuteReader()
         {
 
-            return myExecuteReaderAction();
-
-        }
-
-        public DbDataReader ExecuteReader(Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteReaderAction();
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteReader();
 
         }
 
         public DbDataReader ExecuteReader(string TheCommand)
         {
 
-            return myExecuteReader(TheCommand);
+            return myCurrentExecutor.ExecuteReader(TheCommand);
 
         }
 
-        public DbDataReader ExecuteReader(string TheCommand, Stopwatch TheStopWatch)
+        public DbDataReader ExecuteReader(object TheCommandObject)
         {
 
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteReader(TheCommand);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        public DbDataReader ExecuteReader(StringBuilder TheCommandStringBuilder)
-        {
-
-            return myExecuteReader(TheCommandStringBuilder.ToString());
-
-        }
-
-        public DbDataReader ExecuteReader(StringBuilder TheCommandStringBuilder, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteReader(TheCommandStringBuilder.ToString());
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteReader(TheCommandObject.ToString());
 
         }
 
         public DbDataReader ExecuteReader(IEnumerable<object> TheParameters)
         {
 
-            return myExecuteReaderParametersOnly(TheParameters);
+            //return myExecuteReaderParametersOnly(TheParameters);
 
-        }
-
-        public DbDataReader ExecuteReader(IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteReaderParametersOnly(TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteReader(TheParameters);
 
         }
 
         public DbDataReader ExecuteReader(string TheCommand, IEnumerable<object> TheParameters)
         {
 
-            return myExecuteReaderParameters(TheCommand, TheParameters);
+            //return myExecuteReaderParameters(TheCommand, TheParameters);
+
+            return myCurrentExecutor.ExecuteReader(TheParameters);
 
         }
 
-        public DbDataReader ExecuteReader(string TheCommand, IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
+        public DbDataReader ExecuteReader(object TheCommandObject, IEnumerable<object> TheParameters)
         {
 
-            try
-            {
+            //return myExecuteReaderParameters(TheCommandObject.ToString(), TheParameters);
 
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteReaderParameters(TheCommand, TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteReader(TheCommandObject.ToString(), TheParameters);
 
         }
 
-        public DbDataReader ExecuteReader(StringBuilder TheCommandStringBuilder, IEnumerable<object> TheParameters)
-        {
-
-            return myExecuteReaderParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-        }
-
-        public DbDataReader ExecuteReader(StringBuilder TheCommandStringBuilder, IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteReaderParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        //public DbDataReader ExecuteReader(StringBuilder TheCommandStringBuilder, params KeyValuePair<string, object>[] TheParameters)
+        //public DbDataReader ExecuteReader(Object TheCommandObject, params KeyValuePair<string, object>[] TheParameters)
         //{
 
-        //    return myExecuteReaderParameters(TheCommandStringBuilder.ToString(), TheParameters);
+        //    return myExecuteReaderParameters(TheCommandObject.ToString(), TheParameters);
 
         //}
 
@@ -1644,7 +723,9 @@ namespace CoreComponents.Data
         public DbDataReader ExecuteReaderParamsOnly(params object[] TheParameters)
         {
 
-            return myExecuteReaderParametersOnly(TheParameters);
+            //return myExecuteReaderParametersOnly(TheParameters);
+
+            return myCurrentExecutor.ExecuteReader(TheParameters);
 
         }
 
@@ -1658,30 +739,9 @@ namespace CoreComponents.Data
         public DbDataReader ExecuteReaderParams(string TheCommand, params object[] TheParameters)
         {
 
-            return myExecuteReaderParameters(TheCommand, TheParameters);
+            //return myExecuteReaderParameters(TheCommand, TheParameters);
 
-        }
-
-        public DbDataReader ExecuteReaderTimedParams(Stopwatch TheStopWatch, string TheCommand, params object[] TheParameters)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteReaderParameters(TheCommand, TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteReader(TheCommand, TheParameters);
 
         }
 
@@ -1692,192 +752,88 @@ namespace CoreComponents.Data
 
         //}
 
-        public DbDataReader ExecuteReaderParams(StringBuilder TheCommandStringBuilder, params object[] TheParameters)
+        public DbDataReader ExecuteReaderParams(object TheCommandObject, params object[] TheParameters)
         {
 
-            return myExecuteReaderParameters(TheCommandStringBuilder.ToString(), TheParameters);
+            //return myExecuteReaderParameters(TheCommandObject.ToString(), TheParameters);
+
+            return myCurrentExecutor.ExecuteReader(TheCommandObject.ToString(), TheParameters);
 
         }
 
-        public DbDataReader ExecuteReaderTimedParams(Stopwatch TheStopWatch, StringBuilder TheCommandStringBuilder, params object[] TheParameters)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteReaderParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        //public DbDataReader ExecuteReaderParams(StringBuilder TheCommandStringBuilder, params KeyValuePair<string, object>[] TheParameters)
+        //public DbDataReader ExecuteReaderParams(Object TheCommandObject, params KeyValuePair<string, object>[] TheParameters)
         //{
 
-        //    return myExecuteReaderParameters(TheCommandStringBuilder.ToString(), TheParameters);
+        //    return myExecuteReaderParameters(TheCommandObject.ToString(), TheParameters);
 
         //}
 
         //--
 
-        public object ExecuteScalar()
+        public DbDataReader ExecuteReader(string TheCommand, IDictionary<string, object> TheNamedParameters)
         {
 
-            return myExecuteScalarAction();
+            return myCurrentExecutor.ExecuteReader(TheCommand, TheNamedParameters);
 
         }
 
-        public object ExecuteScalar(Stopwatch TheStopWatch)
+        public DbDataReader ExecuteReader(object TheCommandObject, IDictionary<string, object> TheNamedParameters)
         {
 
-            try
-            {
+            return myCurrentExecutor.ExecuteReader(TheCommandObject, TheNamedParameters);
 
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
+        }
 
-                return myExecuteScalarAction();
+        public DbDataReader ExecuteReader(string TheCommand, dynamic TheNamedParameters)
+        {
 
-            }
-            finally
-            {
+            return myCurrentExecutor.ExecuteReader(TheCommand, TheNamedParameters);
 
-                TheStopWatch.Stop();
+        }
 
-            }
+        public DbDataReader ExecuteReader(object TheCommandObject, dynamic TheNamedParameters)
+        {
+
+            return myCurrentExecutor.ExecuteReader(TheCommandObject, TheNamedParameters);
+
+        }
+
+        public object ExecuteScalar()
+        {
+
+            return myCurrentExecutor.ExecuteScalar();
 
         }
 
         public object ExecuteScalar(string TheCommand)
         {
 
-            return myExecuteScalar(TheCommand);
+            return myCurrentExecutor.ExecuteScalar(TheCommand);
 
         }
 
-        public object ExecuteScalar(string TheCommand, Stopwatch TheStopWatch)
+        public object ExecuteScalar(object TheCommandObject)
         {
 
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteScalar(TheCommand);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        public object ExecuteScalar(StringBuilder TheCommandStringBuilder)
-        {
-
-            return myExecuteScalar(TheCommandStringBuilder.ToString());
-
-        }
-
-        public object ExecuteScalar(StringBuilder TheCommandStringBuilder, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteScalar(TheCommandStringBuilder.ToString());
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteScalar(TheCommandObject.ToString());
 
         }
 
         public object ExecuteScalar(IEnumerable<object> TheParameters)
         {
 
-            return myExecuteScalarParametersOnly(TheParameters);
+            //return myExecuteScalarParametersOnly(TheParameters);
 
-        }
-
-        public object ExecuteScalar(IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteScalarParametersOnly(TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteScalar(TheParameters);
 
         }
 
         public object ExecuteScalar(string TheCommand, IEnumerable<object> TheParameters)
         {
 
-            return myExecuteScalarParameters(TheCommand, TheParameters);
+            //return myExecuteScalarParameters(TheCommand, TheParameters);
 
-        }
-
-        public object ExecuteScalar(string TheCommand, IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteScalarParameters(TheCommand, TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteScalar(TheCommand, TheParameters);
 
         }
 
@@ -1888,40 +844,19 @@ namespace CoreComponents.Data
 
         //}
 
-        public object ExecuteScalar(StringBuilder TheCommandStringBuilder, IEnumerable<object> TheParameters)
+        public object ExecuteScalar(object TheCommandObject, IEnumerable<object> TheParameters)
         {
 
-            return myExecuteScalarParameters(TheCommandStringBuilder.ToString(), TheParameters);
+            //return myExecuteScalarParameters(TheCommandObject.ToString(), TheParameters);
+
+            return myCurrentExecutor.ExecuteScalar(TheCommandObject.ToString(), TheParameters);
 
         }
 
-        public object ExecuteScalar(StringBuilder TheCommandStringBuilder, IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteScalarParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        //public object ExecuteScalar(StringBuilder TheCommandStringBuilder, params KeyValuePair<string, object>[] TheParameters)
+        //public object ExecuteScalar(Object TheCommandObject, params KeyValuePair<string, object>[] TheParameters)
         //{
 
-        //    return myExecuteScalarParameters(TheCommandStringBuilder.ToString(), TheParameters);
+        //    return myExecuteScalarParameters(TheCommandObject.ToString(), TheParameters);
 
         //}
 
@@ -1930,279 +865,106 @@ namespace CoreComponents.Data
         public object ExecuteScalarParamsOnly(params object[] TheParameters)
         {
 
-            return myExecuteScalarParametersOnly(TheParameters);
+            //return myExecuteScalarParametersOnly(TheParameters);
 
-        }
-
-        public object ExecuteScalarTimedParamsOnly(Stopwatch TheStopWatch, params object[] TheParameters)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteScalarParametersOnly(TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteScalar(TheParameters);
 
         }
 
         public object ExecuteScalarParams(string TheCommand, params object[] TheParameters)
         {
 
-            return myExecuteScalarParameters(TheCommand, TheParameters);
+            //return myExecuteScalarParameters(TheCommand, TheParameters);
+
+            return myCurrentExecutor.ExecuteScalar(TheCommand, TheParameters);
 
         }
 
-        public object ExecuteScalarTimedParamsOnly(Stopwatch TheStopWatch, string TheCommand, params object[] TheParameters)
+        public object ExecuteScalarParams(object TheCommandObject, params object[] TheParameters)
         {
 
-            try
-            {
+            //return myExecuteScalarParameters(TheCommandObject.ToString(), TheParameters);
 
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteScalarParameters(TheCommand, TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteScalar(TheCommandObject.ToString(), TheParameters);
 
         }
 
-        public object ExecuteScalarParams(StringBuilder TheCommandStringBuilder, params object[] TheParameters)
-        {
-
-            return myExecuteScalarParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-        }
-
-        public object ExecuteScalarTimedParams(Stopwatch TheStopWatch, StringBuilder TheCommandStringBuilder, params object[] TheParameters)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteScalarParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        //public object ExecuteScalarParams(StringBuilder TheCommandStringBuilder, params KeyValuePair<string, object>[] TheParameters)
+        //public object ExecuteScalarParams(Object TheCommandObject, params KeyValuePair<string, object>[] TheParameters)
         //{
 
-        //    return myExecuteScalarParameters(TheCommandStringBuilder.ToString(), TheParameters);
+        //    return myExecuteScalarParameters(TheCommandObject.ToString(), TheParameters);
 
         //}
 
         //--
 
-        public DataTable ExecuteDataTable()
+        public object ExecuteScalar(string TheCommand, IDictionary<string, object> TheNamedParameters)
         {
 
-            return myExecuteDataTableAction();
+            return myCurrentExecutor.ExecuteScalar(TheCommand, TheNamedParameters);
 
         }
 
-        public DataTable ExecuteDataTable(Stopwatch TheStopWatch)
+        public object ExecuteScalar(object TheCommandObject, IDictionary<string, object> TheNamedParameters)
         {
 
-            try
-            {
+            return myCurrentExecutor.ExecuteScalar(TheCommandObject, TheNamedParameters);
 
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
+        }
 
-                return myExecuteDataTableAction();
+        public object ExecuteScalar(string TheCommand, dynamic TheNamedParameters)
+        {
 
-            }
-            finally
-            {
+            return myCurrentExecutor.ExecuteScalar(TheCommand, TheNamedParameters);
 
-                TheStopWatch.Stop();
+        }
 
-            }
+        public object ExecuteScalar(object TheCommandObject, dynamic TheNamedParameters)
+        {
+
+            return myCurrentExecutor.ExecuteScalar(TheCommandObject, TheNamedParameters);
+
+        }
+
+        public DataTable ExecuteDataTable()
+        {
+
+            return myCurrentExecutor.ExecuteDataTable();
 
         }
 
         public DataTable ExecuteDataTable(string TheCommand)
         {
 
-            return myExecuteDataTable(TheCommand);
+            return myCurrentExecutor.ExecuteDataTable(TheCommand);
 
         }
 
-        public DataTable ExecuteDataTable(string TheCommand, Stopwatch TheStopWatch)
+        public DataTable ExecuteDataTable(object TheCommandObject)
         {
 
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteDataTable(TheCommand);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        public DataTable ExecuteDataTable(StringBuilder TheCommandStringBuilder)
-        {
-
-            return myExecuteDataTable(TheCommandStringBuilder.ToString());
-
-        }
-
-        public DataTable ExecuteDataTable(StringBuilder TheCommandStringBuilder, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteDataTable(TheCommandStringBuilder.ToString());
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteDataTable(TheCommandObject.ToString());
 
         }
 
         public DataTable ExecuteDataTable(IEnumerable<object> TheParameters)
         {
 
-            return myExecuteDataTableParametersOnly(TheParameters);
-
-        }
-
-        public DataTable ExecuteDataTable(IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteDataTableParametersOnly(TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteDataTable(TheParameters);
 
         }
 
         public DataTable ExecuteDataTable(string TheCommand, IEnumerable<object> TheParameters)
         {
 
-            return myExecuteDataTableParameters(TheCommand, TheParameters);
+            return myCurrentExecutor.ExecuteDataTable(TheCommand, TheParameters);
 
         }
 
-        public DataTable ExecuteDataTable(string TheCommand, IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
+        public DataTable ExecuteDataTable(object TheCommandObject, IEnumerable<object> TheParameters)
         {
 
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteDataTableParameters(TheCommand, TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
-
-        }
-
-        public DataTable ExecuteDataTable(StringBuilder TheCommandStringBuilder, IEnumerable<object> TheParameters)
-        {
-
-            return myExecuteDataTableParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-        }
-
-        public DataTable ExecuteDataTable(StringBuilder TheCommandStringBuilder, IEnumerable<object> TheParameters, Stopwatch TheStopWatch)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteDataTableParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteDataTable(TheCommandObject.ToString(), TheParameters);
 
         }
 
@@ -2211,1921 +973,429 @@ namespace CoreComponents.Data
         public DataTable ExecuteDataTableParamsOnly(params object[] TheParameters)
         {
 
-            return myExecuteDataTableParametersOnly(TheParameters);
+            //return myExecuteDataTableParametersOnly(TheParameters);
 
-        }
-
-        public DataTable ExecuteDataTableTimedParamsOnly(Stopwatch TheStopWatch, params object[] TheParameters)
-        {
-
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteDataTableParametersOnly(TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteDataTable(TheParameters);
 
         }
 
         public DataTable ExecuteDataTableParams(string TheCommand, params object[] TheParameters)
         {
 
-            return myExecuteDataTableParameters(TheCommand, TheParameters);
+            //return myExecuteDataTableParameters(TheCommand, TheParameters);
+
+            return myCurrentExecutor.ExecuteDataTable(TheCommand, TheParameters);
 
         }
 
-        public DataTable ExecuteDataTableTimedParams(Stopwatch TheStopWatch, string TheCommand, params object[] TheParameters)
+        public DataTable ExecuteDataTableParams(object TheCommandObject, params object[] TheParameters)
         {
 
-            try
-            {
+            //return myExecuteDataTableParameters(TheCommandObject.ToString(), TheParameters);
 
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteDataTableParameters(TheCommand, TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteDataTable(TheCommandObject.ToString(), TheParameters);
 
         }
 
-        public DataTable ExecuteDataTableParams(StringBuilder TheCommandStringBuilder, params object[] TheParameters)
+        public DataTable ExecuteDataTable(string TheCommand, IDictionary<string, object> TheNamedParameters)
         {
 
-            return myExecuteDataTableParameters(TheCommandStringBuilder.ToString(), TheParameters);
+            return myCurrentExecutor.ExecuteDataTable(TheCommand, TheNamedParameters);
 
         }
 
-        public DataTable ExecuteDataTableTimedParams(Stopwatch TheStopWatch, StringBuilder TheCommandStringBuilder, params object[] TheParameters)
+        public DataTable ExecuteDataTable(object TheCommandObject, IDictionary<string, object> TheNamedParameters)
         {
 
-            try
-            {
-
-                if(TheStopWatch.IsRunning)
-                    TheStopWatch.Restart();
-                else
-                    TheStopWatch.Start();
-
-                return myExecuteDataTableParameters(TheCommandStringBuilder.ToString(), TheParameters);
-
-            }
-            finally
-            {
-
-                TheStopWatch.Stop();
-
-            }
+            return myCurrentExecutor.ExecuteDataTable(TheCommandObject, TheNamedParameters);
 
         }
 
-        //--
-
-        //protected void QuickDiscreteOpen()
-        //{
-
-        //    //Error!
-
-        //}
-
-        //protected void QuickDiscreteClose()
-        //{
-
-        //    //Error!
-
-        //}
-
-        protected int QuickDiscreteExecuteNonQuery()
+        public DataTable ExecuteDataTable(string TheCommand, dynamic TheNamedParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    ResetParameters();
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteNonQuery();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return 0;
+            return myCurrentExecutor.ExecuteDataTable(TheCommand, TheNamedParameters);
 
         }
 
-        protected int QuickDiscreteExecuteNonQuery(string TheCommand)
+        public DataTable ExecuteDataTable(object TheCommandObject, dynamic TheNamedParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.CommandText = TheCommand;
-
-                    ResetParameters();
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteNonQuery();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return 0;
+            return myCurrentExecutor.ExecuteDataTable(TheCommandObject, TheNamedParameters);
 
         }
 
-        protected int QuickDiscreteExecuteNonQuery(IEnumerable<object> TheParameters)
+        public List<dynamic> ExecuteDynamic()
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    SetParameterValues(TheParameters);
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteNonQuery();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return 0;
+            return myCurrentExecutor.ExecuteDynamic();
 
         }
 
-        protected int QuickDiscreteExecuteNonQuery(string TheCommand, IEnumerable<object> TheParameters)
+        public List<dynamic> ExecuteDynamic(string TheCommand)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.CommandText = TheCommand;
-
-                    SetParameterValues(TheParameters);
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteNonQuery();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return 0;
+            return myCurrentExecutor.ExecuteDynamic(TheCommand);
 
         }
 
-        protected DbDataReader QuickDiscreteExecuteReader()
+        public List<dynamic> ExecuteDynamic(object TheCommandObject)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    ResetParameters();
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDynamic(TheCommandObject);
 
         }
 
-        protected DbDataReader QuickDiscreteExecuteReader(string TheCommand)
+        public List<dynamic> ExecuteDynamic(IEnumerable<object> TheParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.CommandText = TheCommand;
-
-                    ResetParameters();
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDynamic(TheParameters);
 
         }
 
-        protected DbDataReader QuickDiscreteExecuteReader(IEnumerable<object> TheParameters)
+        public List<dynamic> ExecuteDynamic(string TheCommand, IEnumerable<object> TheParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    SetParameterValues(TheParameters);
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDynamic(TheCommand, TheParameters);
 
         }
 
-        protected DbDataReader QuickDiscreteExecuteReader(string TheCommand, IEnumerable<object> TheParameters)
+        public List<dynamic> ExecuteDynamic(object TheCommandObject, IEnumerable<object> TheParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.CommandText = TheCommand;
-
-                    SetParameterValues(TheParameters);
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDynamic(TheCommandObject, TheParameters);
 
         }
 
-        protected object QuickDiscreteExecuteScalar()
+        public List<dynamic> ExecuteDynamicParamsOnly(params object[] TheParameters)
         {
-
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    ResetParameters();
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteScalar();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            
+            return myCurrentExecutor.ExecuteDynamic(TheParameters);
 
         }
 
-        protected object QuickDiscreteExecuteScalar(string TheCommand)
+        public List<dynamic> ExecuteDynamicParams(string TheCommand, params object[] TheParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.CommandText = TheCommand;
-
-                    ResetParameters();
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteScalar();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDynamic(TheCommand, TheParameters);
 
         }
 
-        protected object QuickDiscreteExecuteScalar(IEnumerable<object> TheParameters)
+        public List<dynamic> ExecuteDynamicParams(object TheCommandObject, params object[] TheParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    SetParameterValues(TheParameters);
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteScalar();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDynamic(TheCommandObject, TheParameters);
 
         }
 
-        protected object QuickDiscreteExecuteScalar(string TheCommand, IEnumerable<object> TheParameters)
+        public List<dynamic> ExecuteDynamic(string TheCommand, IDictionary<string, object> TheNamedParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.CommandText = TheCommand;
-
-                    SetParameterValues(TheParameters);
-
-                    myCommand.Connection.Open();
-
-                    return myCommand.ExecuteScalar();
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDynamic(TheCommand, TheNamedParameters);
 
         }
 
-        protected DataTable QuickDiscreteExecuteDataTable()
+        public List<dynamic> ExecuteDynamic(object TheCommandObject, IDictionary<string, object> TheNamedParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    ResetParameters();
-
-                    myCommand.Connection.Open();
-
-                    return GetDataTable(myCommand.ExecuteReader());
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDynamic(TheCommandObject, TheNamedParameters);
 
         }
 
-        protected DataTable QuickDiscreteExecuteDataTable(string TheCommand)
+        public List<dynamic> ExecuteDynamic(string TheCommand, dynamic TheNamedParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.CommandText = TheCommand;
-
-                    ResetParameters();
-
-                    myCommand.Connection.Open();
-
-                    return GetDataTable(myCommand.ExecuteReader());
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDynamic(TheCommand, TheNamedParameters);
 
         }
 
-        protected DataTable QuickDiscreteExecuteDataTable(IEnumerable<object> TheParameters)
+        public List<dynamic> ExecuteDynamic(object TheCommandObject, dynamic TheNamedParameters)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    SetParameterValues(TheParameters);
-
-                    myCommand.Connection.Open();
-
-                    return GetDataTable(myCommand.ExecuteReader());
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDynamic(TheCommandObject, TheNamedParameters);
 
         }
 
-        protected DataTable QuickDiscreteExecuteDataTable(string TheCommand, IEnumerable<object> TheParameters)
+        public void ExecuteDynamic(Action<dynamic> TheRowAction)
         {
 
-            if(!myIsActive)
-            {
-
-                try
-                {
-
-                    myIsActive = true;
-
-                    myCommand.CommandText = TheCommand;
-
-                    SetParameterValues(TheParameters);
-
-                    myCommand.Connection.Open();
-
-                    return GetDataTable(myCommand.ExecuteReader());
-
-                }
-                catch(Exception e)
-                {
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myIsActive = false;
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDynamic(TheRowAction);
 
         }
 
-        protected void DiscreteOpen()
+        public void ExecuteDynamic(string TheCommand, Action<dynamic> TheRowAction)
         {
 
-            if(!myIsActive) // && myIsEngaged)
-            {
-
-                try
-                {
-
-                    myCommand.Connection.Open();
-
-                    myIsActive = true;
-
-                }
-                catch(Exception e)
-                {
-
-                    myCommand.Connection.Close();
-
-                    OnError(e);
-
-                }
-
-            }
-            else
-            {
-
-                //Error!
-
-            }
+            myCurrentExecutor.ExecuteDynamic(TheCommand, TheRowAction);
 
         }
 
-        protected void DiscreteClose()
+        public void ExecuteDynamic(object TheCommandObject, Action<dynamic> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    myCommand.Connection.Close();
-
-                }
-                finally
-                {
-
-                    myIsActive = false;
-
-                }
-
-            }
-            else
-            {
-
-                //Error!
-
-            }
+            myCurrentExecutor.ExecuteDynamic(TheCommandObject, TheRowAction);
 
         }
 
-        protected int DiscreteExecuteNonQuery()
+        public void ExecuteDynamic(IEnumerable<object> TheParameters, Action<dynamic> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                ResetParameters();
-
-                return myCommand.ExecuteNonQuery();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return 0;
+            myCurrentExecutor.ExecuteDynamic(TheParameters, TheRowAction);
 
         }
 
-        protected int DiscreteExecuteNonQuery(string TheCommand)
+        public void ExecuteDynamic(string TheCommand, IEnumerable<object> TheParameters, Action<dynamic> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                myCommand.CommandText = TheCommand;
-
-                ResetParameters();
-
-                return myCommand.ExecuteNonQuery();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return 0;
+            myCurrentExecutor.ExecuteDynamic(TheCommand, TheParameters, TheRowAction);
 
         }
 
-        protected int DiscreteExecuteNonQuery(IEnumerable<object> TheParameters)
+        public void ExecuteDynamic(object TheCommandObject, IEnumerable<object> TheParameters, Action<dynamic> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                SetParameterValues(TheParameters);
-
-                return myCommand.ExecuteNonQuery();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return 0;
+            myCurrentExecutor.ExecuteDynamic(TheCommandObject, TheParameters, TheRowAction);
 
         }
 
-        protected int DiscreteExecuteNonQuery(string TheCommand, IEnumerable<object> TheParameters)
+        public void ExecuteDynamicParamsOnly(Action<dynamic> TheRowAction, params object[] TheParameters)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                myCommand.CommandText = TheCommand;
-
-                SetParameterValues(TheParameters);
-
-                return myCommand.ExecuteNonQuery();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return 0;
+            myCurrentExecutor.ExecuteDynamicParamsOnly(TheRowAction, TheRowAction);
 
         }
 
-        protected DbDataReader DiscreteExecuteReader()
+        public void ExecuteDynamicParams(string TheCommand, Action<dynamic> TheRowAction, params object[] TheParameters)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                ResetParameters();
-
-                return myCommand.ExecuteReader();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDynamicParams(TheCommand, TheRowAction, TheParameters);
 
         }
 
-        protected DbDataReader DiscreteExecuteReader(string TheCommand)
+        public void ExecuteDynamicParams(object TheCommandObject, Action<dynamic> TheRowAction, params object[] TheParameters)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                myCommand.CommandText = TheCommand;
-
-                ResetParameters();
-
-                return myCommand.ExecuteReader();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDynamicParams(TheCommandObject, TheRowAction, TheParameters);
 
         }
 
-        protected DbDataReader DiscreteExecuteReader(IEnumerable<object> TheParameters)
+        public void ExecuteDynamic(string TheCommand, IDictionary<string, object> TheNamedParameters, Action<dynamic> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                SetParameterValues(TheParameters);
-
-                return myCommand.ExecuteReader();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDynamic(TheCommand, TheNamedParameters, TheRowAction);
 
         }
 
-        protected DbDataReader DiscreteExecuteReader(string TheCommand, IEnumerable<object> TheParameters)
+        public void ExecuteDynamic(object TheCommandObject, IDictionary<string, object> TheNamedParameters, Action<dynamic> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                myCommand.CommandText = TheCommand;
-
-                SetParameterValues(TheParameters);
-
-                return myCommand.ExecuteReader();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDynamic(TheCommandObject, TheNamedParameters, TheRowAction);
 
         }
 
-        protected object DiscreteExecuteScalar()
+        public void ExecuteDynamic(string TheCommand, dynamic TheNamedParameters, Action<dynamic> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                ResetParameters();
-
-                return myCommand.ExecuteScalar();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDynamic(TheCommand, TheNamedParameters, TheRowAction);
 
         }
 
-        protected object DiscreteExecuteScalar(string TheCommand)
+        public void ExecuteDynamic(object TheCommandObject, dynamic TheNamedParameters, Action<dynamic> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                myCommand.CommandText = TheCommand;
-
-                ResetParameters();
-
-                return myCommand.ExecuteScalar();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDynamic(TheCommandObject, TheNamedParameters, TheRowAction);
 
         }
 
-        protected object DiscreteExecuteScalar(IEnumerable<object> TheParameters)
+        public List<Dictionary<string, object>> ExecuteDictionary()
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                SetParameterValues(TheParameters);
-
-                return myCommand.ExecuteScalar();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDictionary();
 
         }
 
-        protected object DiscreteExecuteScalar(string TheCommand, IEnumerable<object> TheParameters)
+        public List<Dictionary<string, object>> ExecuteDictionary(string TheCommand)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                myCommand.CommandText = TheCommand;
-
-                SetParameterValues(TheParameters);
-
-                return myCommand.ExecuteScalar();
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDictionary(TheCommand);
 
         }
 
-        protected DataTable DiscreteExecuteDataTable()
+        public List<Dictionary<string, object>> ExecuteDictionary(object TheCommandObject)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                ResetParameters();
-
-                return GetDataTable(myCommand.ExecuteReader());
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDictionary(TheCommandObject);
 
         }
 
-        protected DataTable DiscreteExecuteDataTable(string TheCommand)
+        public List<Dictionary<string, object>> ExecuteDictionary(IEnumerable<object> TheParameters)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                myCommand.CommandText = TheCommand;
-
-                ResetParameters();
-
-                return GetDataTable(myCommand.ExecuteReader());
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDictionary(TheParameters);
 
         }
 
-        protected DataTable DiscreteExecuteDataTable(IEnumerable<object> TheParameters)
+        public List<Dictionary<string, object>> ExecuteDictionary(string TheCommand, IEnumerable<object> TheParameters)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                SetParameterValues(TheParameters);
-
-                return GetDataTable(myCommand.ExecuteReader());
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDictionary(TheCommand, TheParameters);
 
         }
 
-        protected DataTable DiscreteExecuteDataTable(string TheCommand, IEnumerable<object> TheParameters)
+        public List<Dictionary<string, object>> ExecuteDictionary(object TheCommandObject, IEnumerable<object> TheParameters)
         {
 
-            if(myIsActive)
-            {
-
-                //try
-                //{
-
-                myCommand.CommandText = TheCommand;
-
-                SetParameterValues(TheParameters);
-
-                return GetDataTable(myCommand.ExecuteReader());
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    DiscreteClose();
-
-                //    OnError(e);
-
-                //}
-
-            }
-
-            return null;
+            return myCurrentExecutor.ExecuteDictionary(TheCommandObject, TheParameters);
 
         }
 
-        protected void TransactionalOpen()
+        public List<Dictionary<string, object>> ExecuteDictionaryParamsOnly(params object[] TheParameters)
         {
 
-            if(!myIsActive) //&& myIsEngaged)
-            {
-
-                //try
-                //{
-
-                myIsActive = true;
-
-                myCommand.Connection.Open();
-
-                if(myTransactionAction != TransactionAction.Commit)
-                    myTransactionAction = TransactionAction.Commit;
-
-                myTransaction = (TTransaction)myCommand.Connection.BeginTransaction(myIsolationLevel);
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    //myTransaction.Rollback();
-
-                //    //myCommand.Connection.Close();
-
-                //    //myTransaction.Dispose();
-
-                //    //myIsActive = false;
-
-                //    TransactionFailure();
-
-                //    OnError(e);
-
-                //}
-
-            }
-            else
-            {
-
-                //Error!
-
-            }
+            return myCurrentExecutor.ExecuteDictionary(TheParameters);
 
         }
 
-        protected void TransactionalClose()
+        public List<Dictionary<string, object>> ExecuteDictionaryParams(string TheCommand, params object[] TheParameters)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    switch(myTransactionAction)
-                    {
-
-                        case TransactionAction.Commit:
-
-                            myTransaction.Commit();
-
-                            break;
-                        case TransactionAction.Rollback:
-
-                            myTransaction.Rollback();
-
-                            break;
-
-                    }
-
-                }
-                catch(Exception e)
-                {
-
-                    //Error!
-
-                    OnError(e);
-
-                }
-                finally
-                {
-
-                    myCommand.Connection.Close();
-
-                    myTransaction.Dispose();
-
-                    myIsActive = false;
-
-                }
-
-            }
-            else
-            {
-
-                //Error!
-
-            }
+            return myCurrentExecutor.ExecuteDictionary(TheCommand, TheParameters);
 
         }
 
-        protected void TransactionFailure()
+        public List<Dictionary<string, object>> ExecuteDictionaryParams(object TheCommandObject, params object[] TheParameters)
         {
 
-            myTransaction.Rollback();
-
-            myCommand.Connection.Close();
-
-            myTransaction.Dispose();
-
-            myIsActive = false;
+            return myCurrentExecutor.ExecuteDictionary(TheCommandObject, TheParameters);
 
         }
 
-        protected int TransactionalExecuteNonQuery()
+        public List<Dictionary<string, object>> ExecuteDictionary(string TheCommand, IDictionary<string, object> TheNamedParameters)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    ResetParameters();
-
-                    return myCommand.ExecuteNonQuery();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return 0;
+            return myCurrentExecutor.ExecuteDictionary(TheCommand, TheNamedParameters);
 
         }
 
-        protected int TransactionalExecuteNonQuery(string TheCommand)
+        public List<Dictionary<string, object>> ExecuteDictionary(object TheCommandObject, IDictionary<string, object> TheNamedParameters)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    myCommand.CommandText = TheCommand;
-
-                    ResetParameters();
-
-                    return myCommand.ExecuteNonQuery();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return 0;
+            return myCurrentExecutor.ExecuteDictionary(TheCommandObject, TheNamedParameters);
 
         }
 
-        protected int TransactionalExecuteNonQuery(IEnumerable<object> TheParameters)
+        public List<Dictionary<string, object>> ExecuteDictionary(string TheCommand, dynamic TheNamedParameters)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    SetParameterValues(TheParameters);
-
-                    return myCommand.ExecuteNonQuery();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return 0;
+            return myCurrentExecutor.ExecuteDictionary(TheCommand, TheNamedParameters);
 
         }
 
-        protected int TransactionalExecuteNonQuery(string TheCommand, IEnumerable<object> TheParameters)
+        public List<Dictionary<string, object>> ExecuteDictionary(object TheCommandObject, dynamic TheNamedParameters)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    myCommand.CommandText = TheCommand;
-
-                    SetParameterValues(TheParameters);
-
-                    return myCommand.ExecuteNonQuery();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return 0;
+            return myCurrentExecutor.ExecuteDictionary(TheCommandObject, TheNamedParameters);
 
         }
 
-        protected DbDataReader TransactionalExecuteReader()
+        public void ExecuteDictionary(Action<Dictionary<string, object>> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    ResetParameters();
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionary(TheRowAction);
 
         }
 
-        protected DbDataReader TransactionalExecuteReader(string TheCommand)
+        public void ExecuteDictionary(string TheCommand, Action<Dictionary<string, object>> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    myCommand.CommandText = TheCommand;
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionary(TheCommand, TheRowAction);
 
         }
 
-        protected DbDataReader TransactionalExecuteReader(IEnumerable<object> TheParameters)
+        public void ExecuteDictionary(object TheCommandObject, Action<Dictionary<string, object>> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    SetParameterValues(TheParameters);
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionary(TheCommandObject, TheRowAction);
 
         }
 
-        protected DbDataReader TransactionalExecuteReader(string TheCommand, IEnumerable<object> TheParameters)
+        public void ExecuteDictionary(IEnumerable<object> TheParameters, Action<IDictionary<string, object>> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    myCommand.CommandText = TheCommand;
-
-                    SetParameterValues(TheParameters);
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionary(TheParameters, TheRowAction);
 
         }
 
-        protected object TransactionalExecuteScalar()
+        public void ExecuteDictionary(string TheCommand, IEnumerable<object> TheParameters, Action<IDictionary<string, object>> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    ResetParameters();
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionary(TheCommand, TheParameters, TheRowAction);
 
         }
 
-        protected object TransactionalExecuteScalar(string TheCommand)
+        public void ExecuteDictionary(object TheCommandObject, IEnumerable<object> TheParameters, Action<IDictionary<string, object>> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    myCommand.CommandText = TheCommand;
-
-                    ResetParameters();
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionary(TheCommandObject, TheParameters, TheRowAction);
 
         }
 
-        protected object TransactionalExecuteScalar(IEnumerable<object> TheParameters)
+        public void ExecuteDictionaryParamsOnly(Action<IDictionary<string, object>> TheRowAction, object[] TheParameters)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    SetParameterValues(TheParameters);
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionaryParamsOnly(TheRowAction, TheParameters);
 
         }
 
-        protected object TransactionalExecuteScalar(string TheCommand, IEnumerable<object> TheParameters)
+        public void ExecuteDictionaryParams(string TheCommand, Action<IDictionary<string, object>> TheRowAction, params object[] TheParameters)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    myCommand.CommandText = TheCommand;
-
-                    SetParameterValues(TheParameters);
-
-                    return myCommand.ExecuteReader();
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionaryParams(TheCommand, TheRowAction, TheParameters);
 
         }
 
-        protected DataTable TransactionalExecuteDataTable()
+        public void ExecuteDictionaryParams(object TheCommandObject, Action<IDictionary<string, object>> TheRowAction, params object[] TheParameters)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    ResetParameters();
-
-                    return GetDataTable(myCommand.ExecuteReader());
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionaryParams(TheCommandObject, TheRowAction, TheParameters);
 
         }
 
-        protected DataTable TransactionalExecuteDataTable(string TheCommand)
+        public void ExecuteDictionary(string TheCommand, IDictionary<string, object> TheNamedParameters, Action<IDictionary<string, object>> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    myCommand.CommandText = TheCommand;
-
-                    return GetDataTable(myCommand.ExecuteReader());
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionary(TheCommand, TheNamedParameters, TheRowAction);
 
         }
 
-        protected DataTable TransactionalExecuteDataTable(IEnumerable<object> TheParameters)
+        public void ExecuteDictionary(object TheCommandObject, IDictionary<string, object> TheNamedParameters, Action<IDictionary<string, object>> TheRowAction)
         {
 
-            if(myIsActive)
-            {
-
-                try
-                {
-
-                    SetParameterValues(TheParameters);
-
-                    return GetDataTable(myCommand.ExecuteReader());
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionary(TheCommandObject, TheNamedParameters, TheRowAction);
 
         }
 
-        protected DataTable TransactionalExecuteDataTable(string TheCommand, IEnumerable<object> TheParameters)
+        public void ExecuteDictionary(string TheCommand, dynamic TheNamedParameters, Action<IDictionary<string, object>> TheRowAction)
         {
 
-            if(myIsActive)
-            {
+            myCurrentExecutor.ExecuteDictionary(TheCommand, TheNamedParameters, TheRowAction);
 
-                try
-                {
+        }
 
-                    myCommand.CommandText = TheCommand;
+        public void ExecuteDictionary(object TheCommandObject, dynamic TheNamedParameters, Action<IDictionary<string, object>> TheRowAction)
+        {
 
-                    SetParameterValues(TheParameters);
-
-                    return GetDataTable(myCommand.ExecuteReader());
-
-                }
-                catch(Exception e)
-                {
-
-                    TransactionFailure();
-
-                    OnError(e);
-
-                }
-
-            }
-
-            return null;
+            myCurrentExecutor.ExecuteDictionary(TheCommandObject, TheNamedParameters, TheRowAction);
 
         }
 
         public void Dispose()
         {
 
-            if(myCommand.Connection != null)
-            {
-
-                myCommand.Connection.Dispose();
-
-            }
-
-            myCommand.Dispose();
-
-            //if (myTransaction != null)
-            //{
-
-            //    myTransaction.Dispose();
-
-            //}
+            myCurrentExecutor.Dispose();
 
         }
-
-    }
-
-    public enum ConnectionType
-    {
-
-        Transactional,
-        Discrete,
-        QuickDiscrete
-
-    }
-
-    public enum TransactionAction
-    {
-
-        Commit,
-        Rollback
-
+        
     }
 
 }

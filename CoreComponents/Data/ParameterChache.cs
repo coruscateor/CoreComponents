@@ -12,16 +12,16 @@ namespace CoreComponents.Data
            where TParameter : DbParameter, new()
     {
 
-        Queue<TParameter> myParameterQueue = new Queue<TParameter>();
+        protected Queue<TParameter> myParameterQueue = new Queue<TParameter>();
 
         public ParameterChache()
         {
         }
 
-        public TParameter Fetch()
+        public TParameter TryFetch()
         {
 
-            if (myParameterQueue.Count > 0)
+            if(myParameterQueue.Count > 0)
             {
 
                 return myParameterQueue.Dequeue();
@@ -36,10 +36,10 @@ namespace CoreComponents.Data
 
         }
 
-        public TParameter Fetch(object TheValue)
+        public TParameter TryFetch(object TheValue)
         {
 
-            if (myParameterQueue.Count > 0)
+            if(myParameterQueue.Count > 0)
             {
 
                 TParameter NewParameter = new TParameter();
@@ -50,19 +50,22 @@ namespace CoreComponents.Data
 
 
             }
-            else
-            {
 
-                return myParameterQueue.Dequeue();
+            TParameter Item = myParameterQueue.Dequeue();
 
-            }
+            Item.Value = TheValue;
+
+            if(Item.ParameterName != "")
+                Item.ParameterName = "";
+
+            return Item;
 
         }
 
-        public TParameter Fetch(object TheValue, string TheName)
+        public TParameter TryFetch(object TheValue, string TheName)
         {
 
-            if (myParameterQueue.Count > 0)
+            if(myParameterQueue.Count > 0)
             {
 
                 TParameter NewParameter = new TParameter();
@@ -73,21 +76,22 @@ namespace CoreComponents.Data
 
                 return NewParameter;
 
-
             }
-            else
-            {
 
-                return myParameterQueue.Dequeue();
+            TParameter Item = myParameterQueue.Dequeue();
 
-            }
+            Item.Value = TheValue;
+
+            Item.ParameterName = TheName;
+
+            return Item;
 
         }
 
         public void FetchInto(DbParameterCollection TheParameterCollection)
         {
 
-            if (myParameterQueue.Count > 0)
+            if(myParameterQueue.Count > 0)
             {
 
                 TheParameterCollection.Add(myParameterQueue.Dequeue());
@@ -108,7 +112,7 @@ namespace CoreComponents.Data
             for (; NumberToFetch > 0; NumberToFetch--)
             {
 
-                if (myParameterQueue.Count > 0)
+                if(myParameterQueue.Count > 0)
                 {
 
                     TheParameterCollection.Add(myParameterQueue.Dequeue());
@@ -125,22 +129,10 @@ namespace CoreComponents.Data
 
         }
 
-        public bool Retrive(TParameter TheParameter)
+        public void Put(TParameter TheParameter)
         {
 
-            if (TheParameter.ParameterName != string.Empty)
-                TheParameter.ParameterName = string.Empty;
-
-            if (!myParameterQueue.Contains(TheParameter))
-            {
-
-                myParameterQueue.Enqueue(TheParameter);
-
-                return true;
-
-            }
-
-            return false;
+            myParameterQueue.Enqueue(TheParameter);
 
         }
 

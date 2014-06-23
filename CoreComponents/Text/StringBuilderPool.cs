@@ -21,13 +21,32 @@ namespace CoreComponents.Text
 
         }
 
+        public static StringBuilder FetchOrCreate(string StartValue)
+        {
+
+            return myPool.FetchOrCreate().Append(StartValue);
+
+        }
+
         public static void FetchOrCreateAsync(SpinValueContainer<StringBuilder> TheSBContainer, Clicker HasBeenSet)
         {
 
             myPool.FetchOrCreateAsync(TheSBContainer, HasBeenSet);
 
         }
-        
+
+        public static void FetchOrCreateAsync(SpinValueContainer<StringBuilder> TheSBContainer, Clicker HasBeenSet, string StartValue)
+        {
+
+            myPool.FetchOrCreateAsync<string>(TheSBContainer, HasBeenSet, (TheSB, TheValueItem) =>
+            {
+
+                TheSB.Append(TheValueItem);
+
+            }, StartValue);
+
+        }
+
         public static void Put(StringBuilder TheSB)
         {
 

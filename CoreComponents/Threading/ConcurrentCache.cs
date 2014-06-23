@@ -44,6 +44,26 @@ namespace CoreComponents.Threading
             });
 
         }
+
+        public void FetchOrCreateAsync<TInput>(SpinValueContainer<T> TheItemContainer, Clicker HasBeenSet, Action<T, TInput> TheInputAction, TInput TheValue)
+        {
+
+            HasBeenSet.Reset();
+
+            ThreadPool.QueueUserWorkItem((TheState) =>
+            {
+
+                 T Item = FetchOrCreate();
+
+                TheItemContainer.Value = Item;
+
+                TheInputAction(Item, TheValue);
+
+                HasBeenSet.Click();
+
+            });
+
+        }
         
         public virtual void Put(T TheItem)
         {

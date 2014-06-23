@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
 
 namespace CoreComponents
@@ -19,84 +18,74 @@ namespace CoreComponents
 
         protected Func<string> myMessageDelegate;
 
-        public ErrorEventArgs(string TheMessage, bool FethchCallingStackTrace = false)
+        public ErrorEventArgs(string TheMessage, bool FetchCallingStackTrace = false)
         {
 
             myMessage = TheMessage;
 
             myMessageDelegate = () => { return myMessage; };
 
-            if (FethchCallingStackTrace)
-                myStackTrace = new System.Diagnostics.StackTrace(1, true);
+            if(FetchCallingStackTrace)
+                myStackTrace = new StackTrace(1, true);
 
         }
 
-        public ErrorEventArgs(Exception TheException, bool FethchCallingStackTrace = false)
+        public ErrorEventArgs(Exception TheException, bool FetchCallingStackTrace = false)
         {
 
             myException = TheException;
 
             myMessageDelegate = () => { return myException.Message; };
 
-            if (FethchCallingStackTrace)
-                myStackTrace = new System.Diagnostics.StackTrace(1, true);
-            //else
-            //    myStackTrace = new System.Diagnostics.StackTrace(myException);
+            if (FetchCallingStackTrace)
+                myStackTrace = new StackTrace(1, true);
 
         }
 
-        public ErrorEventArgs(string TheMessage, Exception TheException, bool FethchCallingStackFrame = false)
+        public ErrorEventArgs(string TheMessage, Exception TheException, bool FetchCallingStackTrace = false)
         {
-
-            myException = TheException;
 
             myException = TheException;
 
             myMessageDelegate = () => { return myMessage; };
 
-            if (FethchCallingStackFrame)
-                myStackTrace = new System.Diagnostics.StackTrace(1, true);
-            //else
-            //    myStackTrace = new System.Diagnostics.StackTrace(myException);
+            if(FetchCallingStackTrace)
+                myStackTrace = new StackTrace(1, true);
 
         }
 
-        public ErrorEventArgs(string TheMessage, StackTrace TheStackFrame)
+        public ErrorEventArgs(string TheMessage, StackTrace TheStackTrace)
         {
 
             myMessage = TheMessage;
 
-            myStackTrace = TheStackFrame;
+            myStackTrace = TheStackTrace;
 
             myMessageDelegate = () => { return myMessage; };
 
         }
 
-        public ErrorEventArgs(Exception TheException, StackTrace TheStackFrame)
+        public ErrorEventArgs(Exception TheException, StackTrace TheStackTrace)
         {
 
             myException = TheException;
 
-            myStackTrace = TheStackFrame;
+            myStackTrace = TheStackTrace;
 
             myMessageDelegate = () => { return myException.Message; };
 
-            //myStackTrace = new System.Diagnostics.StackTrace(myException);
-
         }
 
-        public ErrorEventArgs(string TheMessage, Exception TheException, StackTrace TheStackFrame)
+        public ErrorEventArgs(string TheMessage, Exception TheException, StackTrace TheStackTrace)
         {
 
             myMessage = TheMessage;
 
             myException = TheException;
 
-            myStackTrace = TheStackFrame;
+            myStackTrace = TheStackTrace;
 
             myMessageDelegate = () => { return myMessage; };
-
-            //myStackTrace = new System.Diagnostics.StackTrace(myException);
 
         }
 
@@ -107,18 +96,6 @@ namespace CoreComponents
             {
 
                 return myMessageDelegate();
-
-            }
-
-        }
-        
-        public bool HasNonExceptionMessage
-        {
-
-            get
-            {
-
-                return myMessage != null && myMessage.Length > 0;
 
             }
 
@@ -148,6 +125,24 @@ namespace CoreComponents
 
         }
 
+        public bool TryGetStackTrace(out StackTrace TheStackTrace)
+        {
+
+            if(myStackTrace != null)
+            {
+
+                TheStackTrace = myStackTrace;
+
+                return true;
+
+            }
+
+            TheStackTrace = null;
+
+            return false;
+
+        }
+
         public Exception Exception
         {
 
@@ -169,6 +164,24 @@ namespace CoreComponents
                 return myException != null;
 
             }
+
+        }
+
+        public bool TryGetException(out Exception TheException)
+        {
+
+            if(myException != null)
+            {
+
+                TheException = myException;
+
+                return true;
+
+            }
+
+            TheException = null;
+
+            return false;
 
         }
 

@@ -115,6 +115,18 @@ namespace CoreComponents.Threading.Parallel
 
         }
 
+        public static void Setup(Action TheAction)
+        {
+
+            ThreadPool.QueueUserWorkItem(TheState =>
+            {
+
+                TheAction();
+
+            });
+
+        }
+
         public static void Setup(GetException TheEx, Action TheAction)
         {
 

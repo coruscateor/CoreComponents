@@ -50,6 +50,14 @@
     <Compile Include="AssemblySafetyAttribute.cs" />
     <Compile Include="ComposesAttribute.cs" />
     <Compile Include="CouldBeNull.cs" />
+    <Compile Include="Data\BaseExecutor.cs" />
+    <Compile Include="Data\DataEnums.cs" />
+    <Compile Include="Data\DictionaryTable.cs" />
+    <Compile Include="Data\DiscreteExecutor.cs" />
+    <Compile Include="Data\DynamicTable.cs" />
+    <Compile Include="Data\IExecutor.cs" />
+    <Compile Include="Data\QuickDiscreteExecutor.cs" />
+    <Compile Include="Data\TransactionalExecutor.cs" />
     <Compile Include="DefaultValues.cs" />
     <Compile Include="DynamicAndNot.cs" />
     <Compile Include="ExperimentalAttribute.cs" />
@@ -68,6 +76,7 @@
     <Compile Include="Notifications\MethodSignature.cs" />
     <Compile Include="Notifications\SelectiveNotifier.cs" />
     <Compile Include="NullTolerantAttribute.cs" />
+    <Compile Include="OS.cs" />
     <Compile Include="Overflows.cs" />
     <Compile Include="Percentage.cs" />
     <Compile Include="Properties\Settings3.Designer.cs">
