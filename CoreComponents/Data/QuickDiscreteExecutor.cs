@@ -8,12 +8,19 @@ using System.Data.Common;
 namespace CoreComponents.Data
 {
 
-    public class QuickDiscreteExecutor<TConnection, TCommand, TParameter, TTransaction> : BaseExecutor<TConnection, TCommand, TParameter, TTransaction>, IExecutor
+    public class QuickDiscreteExecutor<TConnection, TCommand, TParameter> : BaseExecutor<TConnection, TCommand, TParameter>, IExecutor
         where TConnection : DbConnection, new()
         where TCommand : DbCommand, new()
         where TParameter : DbParameter, new()
-        where TTransaction : DbTransaction
     {
+
+        public QuickDiscreteExecutor()
+            : base(new TCommand())
+        {
+
+            myCommand.Connection = new TConnection();
+
+        }
 
         public QuickDiscreteExecutor(TCommand TheCommand) : base(TheCommand)
         {

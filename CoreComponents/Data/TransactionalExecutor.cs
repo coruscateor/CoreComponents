@@ -9,19 +9,29 @@ using System.Dynamic;
 namespace CoreComponents.Data
 {
 
-    public class TransactionalExecutor<TConnection, TCommand, TParameter, TTransaction> : BaseExecutor<TConnection, TCommand, TParameter, TTransaction>, IExecutor
+    public class TransactionalExecutor<TConnection, TCommand, TParameter> : BaseExecutor<TConnection, TCommand, TParameter>, IExecutor
         where TConnection : DbConnection, new()
         where TCommand : DbCommand, new()
         where TParameter : DbParameter, new()
-        where TTransaction : DbTransaction
+        //where TTransaction : DbTransaction
     {
 
-        protected TTransaction myTransaction;
+        //protected TTransaction myTransaction;
+
+        protected DbTransaction myTransaction;
 
         protected IsolationLevel myIsolationLevel = IsolationLevel.Unspecified;
 
         protected TransactionAction myTransactionAction = TransactionAction.Commit;
 
+        public TransactionalExecutor()
+            : base(new TCommand())
+        {
+
+            myCommand.Connection = new TConnection();
+
+        }
+        
         public TransactionalExecutor(TCommand TheCommand) : base(TheCommand)
         {
         }
@@ -110,7 +120,9 @@ namespace CoreComponents.Data
                     if(myTransactionAction != TransactionAction.Commit)
                         myTransactionAction = TransactionAction.Commit;
 
-                    myTransaction = (TTransaction)myCommand.Connection.BeginTransaction(myIsolationLevel);
+                    //myTransaction = (TTransaction)myCommand.Connection.BeginTransaction(myIsolationLevel);
+
+                    myTransaction = myCommand.Connection.BeginTransaction(myIsolationLevel);
 
                 }
                 catch(Exception e)
@@ -150,7 +162,9 @@ namespace CoreComponents.Data
                 if(myTransactionAction != TransactionAction.Commit)
                     myTransactionAction = TransactionAction.Commit;
 
-                myTransaction = (TTransaction)myCommand.Connection.BeginTransaction(myIsolationLevel);
+                //myTransaction = (TTransaction)myCommand.Connection.BeginTransaction(myIsolationLevel);
+
+                myTransaction = myCommand.Connection.BeginTransaction(myIsolationLevel);
 
             }
             else

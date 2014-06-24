@@ -9,12 +9,19 @@ using System.Dynamic;
 namespace CoreComponents.Data
 {
 
-    public class DiscreteExecutor<TConnection, TCommand, TParameter, TTransaction> : BaseExecutor<TConnection, TCommand, TParameter, TTransaction>, IExecutor
+    public class DiscreteExecutor<TConnection, TCommand, TParameter> : BaseExecutor<TConnection, TCommand, TParameter>, IExecutor
         where TConnection : DbConnection, new()
         where TCommand : DbCommand, new()
         where TParameter : DbParameter, new()
-        where TTransaction : DbTransaction
     {
+
+        public DiscreteExecutor()
+            : base(new TCommand())
+        {
+
+            myCommand.Connection = new TConnection();
+
+        }
 
         public DiscreteExecutor(TCommand TheCommand) : base(TheCommand)
         {

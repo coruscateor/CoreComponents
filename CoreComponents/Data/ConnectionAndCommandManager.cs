@@ -10,22 +10,24 @@ using System.Diagnostics;
 namespace CoreComponents.Data
 {
 
-    public class ConnectionAndCommandManager<TConnection, TCommand, TParameter, TTransaction> : IConnectionAndCommandManager
+    public class ConnectionAndCommandManager<TConnection, TCommand, TParameter> : IConnectionAndCommandManager
         where TConnection : DbConnection, new()
         where TCommand : DbCommand, new()
         where TParameter : DbParameter, new()
-        where TTransaction : DbTransaction
+        //where TTransaction : DbTransaction
     {
 
         protected ConnectionType myConnectionType = ConnectionType.QuickDiscrete;
 
         protected IExecutor myCurrentExecutor;
 
-        protected QuickDiscreteExecutor<TConnection, TCommand, TParameter, TTransaction> myQuickDiscreteExecutor;
+        protected QuickDiscreteExecutor<TConnection, TCommand, TParameter> myQuickDiscreteExecutor;
 
-        protected DiscreteExecutor<TConnection, TCommand, TParameter, TTransaction> myDiscreteExecutor;
+        protected DiscreteExecutor<TConnection, TCommand, TParameter> myDiscreteExecutor;
 
-        protected TransactionalExecutor<TConnection, TCommand, TParameter, TTransaction> myTransactionExecutor;
+        //protected TransactionalExecutor<TConnection, TCommand, TParameter, TTransaction> myTransactionExecutor;
+
+        protected TransactionalExecutor<TConnection, TCommand, TParameter> myTransactionExecutor;
 
         public ConnectionAndCommandManager()
         {
@@ -69,11 +71,11 @@ namespace CoreComponents.Data
             if(TheConnectionString.Length > 0)
                 Command.Connection.ConnectionString = TheConnectionString;
 
-            myQuickDiscreteExecutor = new QuickDiscreteExecutor<TConnection, TCommand, TParameter, TTransaction>(Command);
+            myQuickDiscreteExecutor = new QuickDiscreteExecutor<TConnection, TCommand, TParameter>(Command);
 
-            myDiscreteExecutor = new DiscreteExecutor<TConnection, TCommand, TParameter, TTransaction>(Command);
+            myDiscreteExecutor = new DiscreteExecutor<TConnection, TCommand, TParameter>(Command);
 
-            myTransactionExecutor = new TransactionalExecutor<TConnection, TCommand, TParameter, TTransaction>(Command);
+            myTransactionExecutor = new TransactionalExecutor<TConnection, TCommand, TParameter>(Command);
 
             myCurrentExecutor = myQuickDiscreteExecutor;
 

@@ -15,106 +15,6 @@ namespace CoreComponents.Threading.Parallel
 
         //Actions
 
-        public static void JustAction(Action TheAction)
-        {
-
-            ThreadPool.QueueUserWorkItem(TheState =>
-            {
-
-                try
-                {
-
-                    TheAction();
-
-                }
-                catch
-                {
-                }
-
-            });
-
-        }
-
-        public static void JustAction<T1>(Action<T1> TheAction, T1 P1)
-        {
-
-            ThreadPool.QueueUserWorkItem(TheState =>
-            {
-
-                try
-                {
-
-                    TheAction(P1);
-
-                }
-                catch
-                {
-                }
-
-            });
-
-        }
-
-        public static void JustAction<T1, T2>(Action<T1, T2> TheAction, T1 P1, T2 P2)
-        {
-
-            ThreadPool.QueueUserWorkItem(TheState =>
-            {
-
-                try
-                {
-
-                    TheAction(P1, P2);
-
-                }
-                catch
-                {
-                }
-
-            });
-
-        }
-
-        public static void JustAction<T1, T2, T3>(Action<T1, T2, T3> TheAction, T1 P1, T2 P2, T3 P3)
-        {
-
-            ThreadPool.QueueUserWorkItem(TheState =>
-            {
-
-                try
-                {
-
-                    TheAction(P1, P2, P3);
-
-                }
-                catch
-                {
-                }
-
-            });
-
-        }
-
-        public static void JustAction<T1, T2, T3, T4>(Action<T1, T2, T3, T4> TheAction, T1 P1, T2 P2, T3 P3, T4 P4)
-        {
-
-            ThreadPool.QueueUserWorkItem(TheState =>
-            {
-
-                try
-                {
-
-                    TheAction(P1, P2, P3, P4);
-
-                }
-                catch
-                {
-                }
-
-            });
-
-        }
-
         public static void Setup(Action TheAction)
         {
 
@@ -122,6 +22,54 @@ namespace CoreComponents.Threading.Parallel
             {
 
                 TheAction();
+
+            });
+
+        }
+
+        public static void Setup<T1>(Action<T1> TheAction, T1 P1)
+        {
+
+            ThreadPool.QueueUserWorkItem(TheState =>
+            {
+
+                TheAction(P1);
+
+            });
+
+        }
+
+        public static void Setup<T1, T2>(Action<T1, T2> TheAction, T1 P1, T2 P2)
+        {
+
+            ThreadPool.QueueUserWorkItem(TheState =>
+            {
+
+                TheAction(P1, P2);
+
+            });
+
+        }
+
+        public static void Setup<T1, T2, T3>(Action<T1, T2, T3> TheAction, T1 P1, T2 P2, T3 P3)
+        {
+
+            ThreadPool.QueueUserWorkItem(TheState =>
+            {
+
+                TheAction(P1, P2, P3);
+
+            });
+
+        }
+
+        public static void Setup<T1, T2, T3, T4>(Action<T1, T2, T3, T4> TheAction, T1 P1, T2 P2, T3 P3, T4 P4)
+        {
+
+            ThreadPool.QueueUserWorkItem(TheState =>
+            {
+
+                TheAction(P1, P2, P3, P4);
 
             });
 
@@ -331,15 +279,7 @@ namespace CoreComponents.Threading.Parallel
                     if(TheInputQueue.TryDequeue(out Parameter))
                     {
 
-                        try
-                        {
-
-                            TheAction(Parameter);
-
-                        }
-                        catch
-                        {
-                        }
+                        TheAction(Parameter);
 
                     }
                     else
@@ -516,7 +456,7 @@ namespace CoreComponents.Threading.Parallel
 
         }
 
-        public static void Setup<T, T1>(GetReturnValue<T> TheRV, Func<T1, T> TheFunc, T1 P1)
+        public static void Setup<TR, T1>(GetReturnValue<TR> TheRV, Func<T1, TR> TheFunc, T1 P1)
         {
 
             ThreadPool.QueueUserWorkItem(TheState =>
@@ -541,18 +481,18 @@ namespace CoreComponents.Threading.Parallel
 
         }
 
-        public static GetReturnValue<T> SetupFunc<T, T1>(Func<T1, T> TheFunc, T1 P1)
+        public static GetReturnValue<TR> SetupFunc<TR, T1>(Func<T1, TR> TheFunc, T1 P1)
         {
 
-            GetReturnValue<T> RV = new GetReturnValue<T>();
+            GetReturnValue<TR> RV = new GetReturnValue<TR>();
 
-            Setup<T, T1>(RV, TheFunc, P1);
+            Setup<TR, T1>(RV, TheFunc, P1);
 
             return RV;
 
         }
 
-        public static void Setup<T, T1, T2>(GetReturnValue<T> TheRV, Func<T1, T2, T> TheFunc, T1 P1, T2 P2)
+        public static void Setup<TR, T1, T2>(GetReturnValue<TR> TheRV, Func<T1, T2, TR> TheFunc, T1 P1, T2 P2)
         {
 
             ThreadPool.QueueUserWorkItem(TheState =>
@@ -577,18 +517,18 @@ namespace CoreComponents.Threading.Parallel
 
         }
 
-        public static GetReturnValue<T> SetupFunc<T, T1, T2>(Func<T1, T2, T> TheFunc, T1 P1, T2 P2)
+        public static GetReturnValue<TR> SetupFunc<TR, T1, T2>(Func<T1, T2, TR> TheFunc, T1 P1, T2 P2)
         {
 
-            GetReturnValue<T> RV = new GetReturnValue<T>();
+            GetReturnValue<TR> RV = new GetReturnValue<TR>();
 
-            Setup<T, T1, T2>(RV, TheFunc, P1, P2);
+            Setup<TR, T1, T2>(RV, TheFunc, P1, P2);
 
             return RV;
 
         }
 
-        public static void Setup<T, T1, T2, T3>(GetReturnValue<T> TheRV, Func<T1, T2, T3, T> TheFunc, T1 P1, T2 P2, T3 P3)
+        public static void Setup<TR, T1, T2, T3>(GetReturnValue<TR> TheRV, Func<T1, T2, T3, TR> TheFunc, T1 P1, T2 P2, T3 P3)
         {
 
             ThreadPool.QueueUserWorkItem(TheState =>
@@ -613,18 +553,18 @@ namespace CoreComponents.Threading.Parallel
 
         }
 
-        public static GetReturnValue<T> SetupFunc<T, T1, T2, T3>(Func<T1, T2, T3, T> TheFunc, T1 P1, T2 P2, T3 P3)
+        public static GetReturnValue<TR> SetupFunc<TR, T1, T2, T3>(Func<T1, T2, T3, TR> TheFunc, T1 P1, T2 P2, T3 P3)
         {
 
-            GetReturnValue<T> RV = new GetReturnValue<T>();
+            GetReturnValue<TR> RV = new GetReturnValue<TR>();
 
-            Setup<T, T1, T2, T3>(RV, TheFunc, P1, P2, P3);
+            Setup<TR, T1, T2, T3>(RV, TheFunc, P1, P2, P3);
 
             return RV;
 
         }
 
-        public static void Setup<T, T1, T2, T3, T4>(GetReturnValue<T> TheRV, Func<T1, T2, T3, T4, T> TheFunc, T1 P1, T2 P2, T3 P3, T4 P4)
+        public static void Setup<TR, T1, T2, T3, T4>(GetReturnValue<TR> TheRV, Func<T1, T2, T3, T4, TR> TheFunc, T1 P1, T2 P2, T3 P3, T4 P4)
         {
 
             ThreadPool.QueueUserWorkItem(TheState =>
@@ -649,12 +589,12 @@ namespace CoreComponents.Threading.Parallel
 
         }
 
-        public static GetReturnValue<T> SetupFunc<T, T1, T2, T3, T4>(Func<T1, T2, T3, T4, T> TheFunc, T1 P1, T2 P2, T3 P3, T4 P4)
+        public static GetReturnValue<TR> SetupFunc<TR, T1, T2, T3, T4>(Func<T1, T2, T3, T4, TR> TheFunc, T1 P1, T2 P2, T3 P3, T4 P4)
         {
 
-            GetReturnValue<T> RV = new GetReturnValue<T>();
+            GetReturnValue<TR> RV = new GetReturnValue<TR>();
 
-            Setup<T, T1, T2, T3, T4>(RV, TheFunc, P1, P2, P3, P4);
+            Setup<TR, T1, T2, T3, T4>(RV, TheFunc, P1, P2, P3, P4);
 
             return RV;
 

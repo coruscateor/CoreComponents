@@ -9,11 +9,10 @@ using System.Dynamic;
 namespace CoreComponents.Data
 {
 
-    public abstract class BaseExecutor<TConnection, TCommand, TParameter, TTransaction>
+    public abstract class BaseExecutor<TConnection, TCommand, TParameter>
         where TConnection : DbConnection, new()
         where TCommand : DbCommand, new()
         where TParameter : DbParameter, new()
-        where TTransaction : DbTransaction
     {
 
         protected TCommand myCommand;
