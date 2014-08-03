@@ -6,7 +6,7 @@ using System.Text;
 namespace CoreComponents.Items
 {
 
-    public class UniqueItemList<T> : IListSource<T>, IToArray<T>, IEnumerable<T>
+    public class UniqueItemList<T> : IUniqueItemList<T>, IListSource<T>, IToArray<T>, IEnumerable<T>
     {
 
         protected List<T> myItems;
@@ -40,7 +40,24 @@ namespace CoreComponents.Items
 
         }
 
-        public bool Insert(int index, T item)
+
+        public void Insert(int index, T item)
+        {
+
+            if(!myItems.Contains(item))
+            {
+
+                myItems.Insert(index, item);
+
+                return;
+
+            }
+
+            throw new ItemIsAlreadyPresentException<T>(item);
+
+        }
+
+        public bool TryInsert(int index, T item)
         {
 
             if(!myItems.Contains(item))
@@ -111,7 +128,49 @@ namespace CoreComponents.Items
 
         }
 
-        public bool Add(T item)
+        public bool TrySet(int TheIndex, T TheItem)
+        {
+
+            if(myItems.Count > 0)
+            {
+
+                if(TheIndex > -1)
+                {
+
+                    if(myItems.Count < TheIndex)
+                    {
+
+                        myItems[TheIndex] = TheItem;
+
+                        return true;
+
+                    }
+
+                }
+
+            }
+
+            return false;
+
+        }
+
+        public void Add(T item)
+        {
+
+            if(!myItems.Contains(item))
+            {
+
+                myItems.Add(item);
+
+                return;
+
+            }
+
+            throw new ItemIsAlreadyPresentException<T>(item);
+            
+        }
+
+        public bool TryAdd(T item)
         {
 
             if(!myItems.Contains(item))

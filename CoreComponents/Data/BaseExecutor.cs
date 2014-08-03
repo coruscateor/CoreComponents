@@ -183,7 +183,6 @@ namespace CoreComponents.Data
 
         }
 
-
         protected List<Dictionary<string, object>> GetDictionaries(DbDataReader TheDbDataReader)
         {
 

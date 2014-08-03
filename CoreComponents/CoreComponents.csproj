@@ -71,8 +71,13 @@
     <Compile Include="Items\IHasLongCount.cs" />
     <Compile Include="Items\IListContainer.cs" />
     <Compile Include="Items\IListSource.cs" />
+    <Compile Include="Items\ItemIsAlreadyPresentException.cs" />
+    <Compile Include="Items\IUniqueItemListcs.cs" />
     <Compile Include="Items\ListContainer.cs" />
+    <Compile Include="Items\ReadonlyDictionary.cs" />
+    <Compile Include="Items\ReadonlyList.cs" />
     <Compile Include="Items\UniqueItemList.cs" />
+    <Compile Include="NOTICEAttribute.cs" />
     <Compile Include="Notifications\MethodSignature.cs" />
     <Compile Include="Notifications\SelectiveNotifier.cs" />
     <Compile Include="NullTolerantAttribute.cs" />
@@ -98,6 +103,8 @@
     <Compile Include="Text\IToStringBuilder.cs" />
     <Compile Include="Text\SpaceExtender.cs" />
     <Compile Include="Text\SpaceIndentationLevelBuilder.cs" />
+    <Compile Include="Text\StringBuilderExtensions.cs" />
+    <Compile Include="Text\StringBuilderLocal.cs" />
     <Compile Include="Text\StringBuilderPool.cs" />
     <Compile Include="Text\TabExtender.cs" />
     <Compile Include="Text\TabIndentationLevelBuilder.cs" />
@@ -121,6 +128,7 @@
     <Compile Include="Threading\ComplicatedClickerState.cs" />
     <Compile Include="Threading\ConcurrentCache.cs" />
     <Compile Include="Text\MonitorStringBuilder.cs" />
+    <Compile Include="Threading\InAccurateAttribute.cs" />
     <Compile Include="Threading\IUsesMemoryBarrier.cs" />
     <Compile Include="Threading\IWaitable.cs" />
     <Compile Include="Threading\IWaitableValueContainer.cs" />
