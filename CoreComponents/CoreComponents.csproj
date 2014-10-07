@@ -52,10 +52,14 @@
     <Compile Include="CouldBeNull.cs" />
     <Compile Include="Data\BaseExecutor.cs" />
     <Compile Include="Data\DataEnums.cs" />
-    <Compile Include="Data\DictionaryTable.cs" />
+    <Compile Include="Data\DictionaryPseudoTable.cs" />
     <Compile Include="Data\DiscreteExecutor.cs" />
-    <Compile Include="Data\DynamicTable.cs" />
+    <Compile Include="Data\DynamicPseudoTable.cs" />
     <Compile Include="Data\IExecutor.cs" />
+    <Compile Include="Data\IgnoreAttribute.cs" />
+    <Compile Include="Data\IParameterList.cs" />
+    <Compile Include="Data\NameAttribute.cs" />
+    <Compile Include="Data\ParameterList.cs" />
     <Compile Include="Data\QuickDiscreteExecutor.cs" />
     <Compile Include="Data\TransactionalExecutor.cs" />
     <Compile Include="DefaultValues.cs" />
@@ -68,7 +72,6 @@
     <Compile Include="IReadonlyReferenceValueContainer.cs" />
     <Compile Include="IReferenceValueContainer.cs" />
     <Compile Include="Items\IHasCount.cs" />
-    <Compile Include="Items\IHasLongCount.cs" />
     <Compile Include="Items\IListContainer.cs" />
     <Compile Include="Items\IListSource.cs" />
     <Compile Include="Items\ItemIsAlreadyPresentException.cs" />
@@ -248,10 +251,7 @@
     <Compile Include="Items\ArrayCopier.cs" />
     <Compile Include="Items\ArrayValueChecker.cs" />
     <Compile Include="Items\EmptyEnumerator.cs" />
-    <Compile Include="Items\ILongCollection.cs" />
-    <Compile Include="Items\ILongList.cs" />
     <Compile Include="Items\ImmutableSet.cs" />
-    <Compile Include="Items\LongList.cs" />
     <Compile Include="Streaming\StreamList.cs" />
     <Compile Include="Threading\ConcurrentInputWaitQueueContainer.cs" />
     <Compile Include="Threading\ConcurrentOutputWaitQueueContainer.cs" />
@@ -273,8 +273,6 @@
     <Compile Include="Threading\ReadonlyFencedRefContainer.cs" />
     <Compile Include="Threading\WaitWatcher.cs" />
     <Compile Include="DisposableReference.cs" />
-    <Compile Include="Text\LongString.cs" />
-    <Compile Include="Text\LongStringBuilder.cs" />
     <Compile Include="Text\SBsAndArrays.cs" />
     <Compile Include="Text\StringCache.cs" />
     <Compile Include="Text\StringCopier.cs" />

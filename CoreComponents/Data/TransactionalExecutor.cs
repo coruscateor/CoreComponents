@@ -255,7 +255,7 @@ namespace CoreComponents.Data
             else
             {
 
-                throw new Exception("Executor is active");
+                throw new Exception("Executor is not active");
 
             }
 

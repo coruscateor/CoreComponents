@@ -94,7 +94,9 @@ namespace CoreComponents.Notifications
             {
 
                 if(!myDelegates.Contains(TheDelegate))
-                    return myDelegates.Add(TheDelegate);
+                    myDelegates.Add(TheDelegate);
+
+                return true;
 
             }
 
@@ -141,7 +143,9 @@ namespace CoreComponents.Notifications
         public bool Insert(int TheIndex, Delegate TheDelegate)
         {
 
-            return myDelegates.Insert(TheIndex, TheDelegate);
+            myDelegates.Insert(TheIndex, TheDelegate);
+
+            return true;
 
         }
 
@@ -220,15 +224,12 @@ namespace CoreComponents.Notifications
             foreach(var Item in TheItems)
             {
 
-                if(myDelegates.Add(Item))
+                myDelegates.Add(Item);
+
+                unchecked
                 {
 
-                    unchecked
-                    {
-
-                        ++AddedItems;
-
-                    }
+                    ++AddedItems;
 
                 }
 

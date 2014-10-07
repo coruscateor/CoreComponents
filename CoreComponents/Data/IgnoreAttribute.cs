@@ -4,17 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CoreComponents.Items
+namespace CoreComponents.Data
 {
     
-    public interface IHasLongCount
+    public class IgnoreAttribute : Attribute
     {
 
-        long Count
+        public IgnoreAttribute()
         {
-
-            get;
-
         }
 
     }

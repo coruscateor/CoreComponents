@@ -69,31 +69,6 @@ namespace CoreComponents.Items
 
         }
 
-        public ImmutableSet(ILongList<T> TheItems)
-        {
-
-            if(TheItems.Count > 0)
-            {
-
-                myItems = new T[TheItems.Count];
-
-                for(long i = 0; i < myItems.LongLength; ++i)
-                {
-
-                    myItems[i] = TheItems[i];
-
-                }
-
-            }
-            else
-            {
-
-                myItems = new T[0];
-
-            }
-
-        }
-
         public ImmutableSet(IEnumerable<T> TheItems, long TheCount)
         {
 

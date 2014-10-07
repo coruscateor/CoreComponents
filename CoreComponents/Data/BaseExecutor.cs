@@ -5,6 +5,7 @@ using System.Text;
 using System.Data;
 using System.Data.Common;
 using System.Dynamic;
+using System.Reflection;
 
 namespace CoreComponents.Data
 {
@@ -31,43 +32,32 @@ namespace CoreComponents.Data
 
             DataTable DT = new DataTable();
 
-            try
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
             {
 
-                if(TheDbDataReader.HasRows && !TheDbDataReader.IsClosed)
+                int NumberOfRows = TheDbDataReader.FieldCount;
+
+                //Setup Columns
+
+                for(int i = 0; i < NumberOfRows; ++i)
                 {
 
-                    int NumberOfRows = TheDbDataReader.FieldCount;
-
-                    //Setup Columns
-
-                    for(int i = 0; i < NumberOfRows; ++i)
-                    {
-
-                        DT.Columns.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetFieldType(i));
-
-                    }
-
-                    //Add Data
-
-                    while(TheDbDataReader.Read())
-                    {
-
-                        object[] Values = new object[NumberOfRows];
-
-                        TheDbDataReader.GetValues(Values);
-
-                        DT.Rows.Add(Values);
-
-                    }
+                    DT.Columns.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetFieldType(i));
 
                 }
 
-            }
-            finally
-            {
+                //Add Data
 
-                TheDbDataReader.Close();
+                while(TheDbDataReader.Read())
+                {
+
+                    object[] Values = new object[NumberOfRows];
+
+                    TheDbDataReader.GetValues(Values);
+
+                    DT.Rows.Add(Values);
+
+                }
 
             }
 
@@ -78,28 +68,17 @@ namespace CoreComponents.Data
         protected void SetDictionary(DbDataReader TheDbDataReader, IDictionary<string, object> TheDictionary)
         {
 
-            try
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
             {
 
-                if(TheDbDataReader.HasRows && !TheDbDataReader.IsClosed)
+                int NumberOfRows = TheDbDataReader.FieldCount;
+
+                for(int i = 0; i < NumberOfRows; ++i)
                 {
 
-                    int NumberOfRows = TheDbDataReader.FieldCount;
-
-                    for(int i = 0; i < NumberOfRows; ++i)
-                    {
-
-                        TheDictionary.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
-
-                    }
+                    TheDictionary.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
 
                 }
-
-            }
-            finally
-            {
-
-                TheDbDataReader.Close();
 
             }
 
@@ -108,33 +87,22 @@ namespace CoreComponents.Data
         protected void SetDictionaries(DbDataReader TheDbDataReader, IEnumerable<IDictionary<string, object>> TheList)
         {
 
-            try
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
             {
 
-                if(TheDbDataReader.HasRows && !TheDbDataReader.IsClosed)
+                foreach(var Item in TheList)
                 {
 
-                    foreach(var Item in TheList)
+                    int NumberOfRows = TheDbDataReader.FieldCount;
+
+                    for(int i = 0; i < NumberOfRows; ++i)
                     {
 
-                        int NumberOfRows = TheDbDataReader.FieldCount;
-
-                        for(int i = 0; i < NumberOfRows; ++i)
-                        {
-
-                            Item.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
-
-                        }
+                        Item.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
 
                     }
 
                 }
-
-            }
-            finally
-            {
-
-                TheDbDataReader.Close();
 
             }
 
@@ -145,37 +113,26 @@ namespace CoreComponents.Data
 
             List<dynamic> Items = new List<dynamic>();
 
-            try
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
             {
 
-                if(!TheDbDataReader.IsClosed)
+                while(TheDbDataReader.Read())
                 {
 
-                    while(TheDbDataReader.Read())
+                    IDictionary<string, object> Item = new ExpandoObject();
+
+                    int NumberOfRows = TheDbDataReader.FieldCount;
+
+                    for(int i = 0; i < NumberOfRows; ++i)
                     {
 
-                        IDictionary<string, object> Item = new ExpandoObject();
-
-                        int NumberOfRows = TheDbDataReader.FieldCount;
-
-                        for(int i = 0; i < NumberOfRows; ++i)
-                        {
-
-                            Item.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
-
-                        }
-
-                        Items.Add(Item);
+                        Item.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
 
                     }
 
+                    Items.Add(Item);
+
                 }
-
-            }
-            finally
-            {
-
-                TheDbDataReader.Close();
 
             }
 
@@ -188,37 +145,26 @@ namespace CoreComponents.Data
 
             List<Dictionary<string, object>> Items = new List<Dictionary<string, object>>();
 
-            try
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
             {
 
-                if(!TheDbDataReader.IsClosed)
+                while(TheDbDataReader.Read())
                 {
 
-                    while(TheDbDataReader.Read())
+                    Dictionary<string, object> Item = new Dictionary<string, object>();
+
+                    int NumberOfRows = TheDbDataReader.FieldCount;
+
+                    for(int i = 0; i < NumberOfRows; ++i)
                     {
 
-                        Dictionary<string, object> Item = new Dictionary<string, object>();
-
-                        int NumberOfRows = TheDbDataReader.FieldCount;
-
-                        for(int i = 0; i < NumberOfRows; ++i)
-                        {
-
-                            Item.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
-
-                        }
-
-                        Items.Add(Item);
+                        Item.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
 
                     }
 
+                    Items.Add(Item);
+
                 }
-
-            }
-            finally
-            {
-
-                TheDbDataReader.Close();
 
             }
 
@@ -229,37 +175,26 @@ namespace CoreComponents.Data
         protected void GetDictionaries(DbDataReader TheDbDataReader, Action<Dictionary<string, object>> TheRowAction)
         {
 
-            try
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
             {
 
-                if(!TheDbDataReader.IsClosed)
+                while(TheDbDataReader.Read())
                 {
 
-                    while(TheDbDataReader.Read())
+                    Dictionary<string, object> Item = new Dictionary<string, object>();
+
+                    int NumberOfRows = TheDbDataReader.FieldCount;
+
+                    for(int i = 0; i < NumberOfRows; ++i)
                     {
 
-                        Dictionary<string, object> Item = new Dictionary<string, object>();
-
-                        int NumberOfRows = TheDbDataReader.FieldCount;
-
-                        for(int i = 0; i < NumberOfRows; ++i)
-                        {
-
-                            Item.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
-
-                        }
-
-                        TheRowAction(Item);
+                        Item.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
 
                     }
 
+                    TheRowAction(Item);
+
                 }
-
-            }
-            finally
-            {
-
-                TheDbDataReader.Close();
 
             }
 
@@ -268,39 +203,371 @@ namespace CoreComponents.Data
         protected void GetExpandoObjects(DbDataReader TheDbDataReader, Action<dynamic> TheRowAction)
         {
 
-            try
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
             {
 
-                if(!TheDbDataReader.IsClosed)
+                while(TheDbDataReader.Read())
                 {
 
-                    while(TheDbDataReader.Read())
+                    IDictionary<string, object> Item = new ExpandoObject();
+
+                    int NumberOfRows = TheDbDataReader.FieldCount;
+
+                    for(int i = 0; i < NumberOfRows; ++i)
                     {
 
-                        IDictionary<string, object> Item = new ExpandoObject();
+                        Item.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
 
-                        int NumberOfRows = TheDbDataReader.FieldCount;
+                    }
 
-                        for(int i = 0; i < NumberOfRows; ++i)
-                        {
+                    TheRowAction(Item);
 
-                            Item.Add(TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
+                }
 
-                        }
+            }
 
-                        TheRowAction(Item);
+        }
+
+        protected void ReadOutResults(DbDataReader TheDbDataReader, Action<int, int, string, object> TheItemAction)
+        {
+
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
+            {
+
+                int RowOrdinal = 0;
+
+                int NumberOfFields = TheDbDataReader.FieldCount;
+
+                while(TheDbDataReader.Read())
+                {
+
+                    for(int i = 0; i < NumberOfFields; ++i)
+                    {
+
+                        TheItemAction(RowOrdinal, i, TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
+
+                        ++RowOrdinal;
 
                     }
 
                 }
 
             }
-            finally
+
+        }
+
+        protected void ReadOutResults<T>(DbDataReader TheDbDataReader, IList<T> TheResults, Dictionary<string, Action<T, object>> TheColumnMappings) where T : class, new()
+        {
+
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
             {
 
-                TheDbDataReader.Close();
+                int RowOrdinal = 0;
+
+                int NumberOfFields = TheDbDataReader.FieldCount;
+
+                if(NumberOfFields == 0)
+                    return;
+
+                int AtRow = 0;
+
+                while(TheDbDataReader.Read())
+                {
+
+                    ++AtRow;
+
+                    T CurrentItem;
+
+                    if(AtRow == TheResults.Count)
+                    {
+
+                        CurrentItem = TheResults[AtRow];
+
+                    }
+                    else
+                    {
+
+                        CurrentItem = new T();
+
+                        TheResults.Add(CurrentItem);
+
+                    }
+
+                    for(int i = 0; i < NumberOfFields; ++i)
+                    {
+
+                        //TheItemAction(RowOrdinal, i, TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
+
+                        string RowName = TheDbDataReader.GetName(i);
+
+                        //Rewrite to check columns before iterating
+
+                        if(TheColumnMappings.ContainsKey(RowName))
+                        {
+
+                            TheColumnMappings[RowName](CurrentItem, TheDbDataReader.GetValue(i));
+
+                        }
+
+                        ++RowOrdinal;
+
+                    }
+
+                }
+
+                if(AtRow > 0 && TheResults.Count > AtRow)
+                {
+
+                    int NumberToRemove = TheResults.Count - AtRow;
+
+                    while(NumberToRemove > 0)
+                    {
+
+                        TheResults.RemoveAt(TheResults.Count - 1);
+
+                        --NumberToRemove;
+
+                    }
+
+                }
 
             }
+
+        }
+
+        protected bool ReadOutResult<T>(DbDataReader TheDbDataReader, out T TheResult, Dictionary<string, Action<T, object>> TheColumnMappings) where T : class, new()
+        {
+
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
+            {
+
+                int RowOrdinal = 0;
+
+                int NumberOfFields = TheDbDataReader.FieldCount;
+
+                if(NumberOfFields == 0)
+                {
+
+                    TheResult = null;
+
+                    return false;
+
+                }
+
+                if(TheDbDataReader.Read())
+                {
+
+                    TheResult = new T();
+
+                    for(int i = 0; i < NumberOfFields; ++i)
+                    {
+
+                        //TheItemAction(RowOrdinal, i, TheDbDataReader.GetName(i), TheDbDataReader.GetValue(i));
+
+                        string RowName = TheDbDataReader.GetName(i);
+
+                        //Rewrite to check columns before iterating
+
+                        if(TheColumnMappings.ContainsKey(RowName))
+                        {
+
+                            TheColumnMappings[RowName](TheResult, TheDbDataReader.GetValue(i));
+
+                        }
+
+                        ++RowOrdinal;
+
+                    }
+
+                    return true;
+
+                }
+
+            }
+
+            TheResult = null;
+
+            return false;
+
+        }
+
+        protected bool ReflectResults<T>(DbDataReader TheDbDataReader, out List<T> TheItems) where T : new()
+        {
+
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
+            {
+
+                int RowOrdinal = TheDbDataReader.VisibleFieldCount;
+
+                Type TypeOfT = typeof(T);
+
+                PropertyInfo[] PInfos = TypeOfT.GetProperties();
+
+                TheItems = new List<T>();
+
+                object[] ParameterContainer = new object[1];
+
+                while(TheDbDataReader.Read())
+                {
+                    
+                    T NewObj = new T();
+
+                    int NumberOfFields = TheDbDataReader.FieldCount;
+
+                    for(int i = 0; i < NumberOfFields; ++i)
+                    {
+
+                        string ColumnName = TheDbDataReader.GetName(i);
+
+                        MethodInfo FoundSetMethod = null;
+
+                        string Name = null;
+
+                        foreach(var PInfo in PInfos)
+                        {
+
+                            FoundSetMethod = PInfo.GetSetMethod();
+
+                            if(FoundSetMethod != null)
+                            {
+
+                                foreach(var Item in PInfo.GetCustomAttributes(false))
+                                {
+
+                                    if(Item is NameAttribute)
+                                    {
+
+                                        NameAttribute NA = (NameAttribute)Item;
+
+                                        Name = NA.Name;
+
+                                    }
+
+                                }
+
+                                if(string.IsNullOrWhiteSpace(Name))
+                                    Name = FoundSetMethod.Name;
+
+                                if(FoundSetMethod.IsPublic && Name == ColumnName)
+                                {
+
+                                    object FieldValue = TheDbDataReader.GetValue(i);
+
+                                    if(FieldValue.GetType() == FoundSetMethod.ReturnType)
+                                    {
+
+                                        ParameterContainer[0] = FieldValue;
+
+                                        FoundSetMethod.Invoke(NewObj, ParameterContainer);
+
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                return true;
+
+            }
+
+            TheItems = null;
+
+            return false;
+
+        }
+
+        protected bool ReflectResultsSingle<T>(DbDataReader TheDbDataReader, out T TheItem) where T : new()
+        {
+
+            TheItem = new T();
+
+            if(!TheDbDataReader.IsClosed && TheDbDataReader.HasRows)
+            {
+
+                int RowOrdinal = TheDbDataReader.VisibleFieldCount;
+
+                Type TypeOfT = typeof(T);
+
+                PropertyInfo[] PInfos = TypeOfT.GetProperties();
+
+                object[] ParameterContainer = new object[1];
+
+                if(TheDbDataReader.Read())
+                {
+
+                    int NumberOfFields = TheDbDataReader.FieldCount;
+
+                    for(int i = 0; i < NumberOfFields; ++i)
+                    {
+
+                        string ColumnName = TheDbDataReader.GetName(i);
+
+                        MethodInfo FoundSetMethod = null;
+
+                        string Name = null;
+
+                        foreach(var PInfo in PInfos)
+                        {
+
+                            FoundSetMethod = PInfo.GetSetMethod();
+
+                            if(FoundSetMethod != null)
+                            {
+
+                                foreach(var Item in PInfo.GetCustomAttributes(false))
+                                {
+
+                                    if(Item is NameAttribute)
+                                    {
+
+                                        NameAttribute NA = (NameAttribute)Item;
+
+                                        Name = NA.Name;
+
+                                    }
+
+                                }
+
+                                if(string.IsNullOrWhiteSpace(Name))
+                                    Name = FoundSetMethod.Name;
+
+                                if(FoundSetMethod.IsPublic && Name == ColumnName)
+                                {
+
+                                    object FieldValue = TheDbDataReader.GetValue(i);
+
+                                    if(FieldValue.GetType() == FoundSetMethod.ReturnType)
+                                    {
+
+                                        ParameterContainer[0] = FieldValue;
+
+                                        FoundSetMethod.Invoke(TheItem, ParameterContainer);
+
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                    return true;
+
+                }
+
+            }
+
+            return false;
 
         }
 

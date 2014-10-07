@@ -6,21 +6,21 @@ using System.Text;
 namespace CoreComponents.Data
 {
     
-    public class DictionaryTable
+    public class DictionaryPseudoTable
     {
 
         protected string myName;
 
         protected List<IDictionary<string, object>> myRows;
 
-        public DictionaryTable()
+        public DictionaryPseudoTable()
         {
 
             myRows = new List<IDictionary<string, object>>();
 
         }
 
-        public DictionaryTable(string TheName)
+        public DictionaryPseudoTable(string TheName)
         {
 
             myName = TheName;
@@ -29,7 +29,7 @@ namespace CoreComponents.Data
 
         }
 
-        public DictionaryTable(string TheName, List<IDictionary<string, object>> TheRows, bool Copy = false)
+        public DictionaryPseudoTable(string TheName, List<IDictionary<string, object>> TheRows, bool Copy = false)
         {
 
             myName = TheName;
@@ -41,7 +41,7 @@ namespace CoreComponents.Data
 
         }
 
-        public DictionaryTable(string TheName, IList<IDictionary<string, object>> TheRows)
+        public DictionaryPseudoTable(string TheName, IList<IDictionary<string, object>> TheRows)
         {
 
             myName = TheName;

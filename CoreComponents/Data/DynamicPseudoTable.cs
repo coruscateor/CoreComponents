@@ -9,21 +9,21 @@ namespace CoreComponents.Data
     /// <summary>
     /// A table that can have columns posessing values of various types. 
     /// </summary>
-    public class DynamicTable
+    public class DynamicPseudoTable
     {
 
         protected string myName;
 
         protected List<dynamic> myRows;
 
-        public DynamicTable()
+        public DynamicPseudoTable()
         {
 
             myRows = new List<dynamic>();
 
         }
 
-        public DynamicTable(string TheName)
+        public DynamicPseudoTable(string TheName)
         {
 
             myName = TheName;
@@ -32,7 +32,7 @@ namespace CoreComponents.Data
 
         }
 
-        public DynamicTable(string TheName, List<dynamic> TheRows, bool Copy = false)
+        public DynamicPseudoTable(string TheName, List<dynamic> TheRows, bool Copy = false)
         {
 
             myName = TheName;
@@ -44,7 +44,7 @@ namespace CoreComponents.Data
 
         }
 
-        public DynamicTable(string TheName, IList<dynamic> TheRows)
+        public DynamicPseudoTable(string TheName, IList<dynamic> TheRows)
         {
 
             myName = TheName;

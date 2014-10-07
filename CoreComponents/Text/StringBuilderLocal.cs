@@ -19,7 +19,7 @@ namespace CoreComponents.Text
 
         }
 
-        public bool IsCreated
+        public static bool IsCreated
         {
 
             get
@@ -34,7 +34,7 @@ namespace CoreComponents.Text
         [WARNING]
         [CAUTION]
         [DANGER]
-        public void Dispose()
+        public static void Dispose()
         {
 
             myLocalSB.Dispose();
@@ -46,7 +46,7 @@ namespace CoreComponents.Text
         [WARNING]
         [CAUTION]
         [DANGER]
-        public void UnDispose()
+        public static void UnDispose()
         {
 
             if(myLocalSB != null)
