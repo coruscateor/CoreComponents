@@ -4,7 +4,6 @@ Concepts addressed:
 - Threading
 - Data access
 - Collections
-- File system modelling
 
 Among other things...
 

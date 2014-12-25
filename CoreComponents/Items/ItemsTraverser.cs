@@ -9,9 +9,9 @@ namespace CoreComponents.Items
     public class ItemsTraverser<T> : IItemsTraverser<T>
     {
 
-        public event Event<ItemsTraverser<T>> PlaceChanged;
+        public event EventHandler<ItemsTraverser<T>> PlaceChanged;
 
-        public event Event<ItemsTraverser<T>> ItemsChanged;
+        public event EventHandler<ItemsTraverser<T>> ItemsChanged;
 
         protected T[] myItems;
 

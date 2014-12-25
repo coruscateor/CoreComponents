@@ -66,7 +66,6 @@
     <Compile Include="DynamicAndNot.cs" />
     <Compile Include="ExperimentalAttribute.cs" />
     <Compile Include="FileSystem\RangeLock.cs" />
-    <None Include="FileSystem\ToBeFixed\MountPoint.cs" />
     <Compile Include="ICloneWith.cs" />
     <Compile Include="InfrastructureAttribute.cs" />
     <Compile Include="IReadonlyReferenceValueContainer.cs" />
@@ -92,6 +91,10 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="React\ComplexFactor.cs" />
+    <Compile Include="React\Factor.cs" />
+    <Compile Include="React\FactorUpdateListener.cs" />
+    <Compile Include="React\IFactor.cs" />
     <Compile Include="ReadonlyCouldBeNull.cs" />
     <Compile Include="ReadonlyValueContainer.cs" />
     <Compile Include="Safety.cs" />
@@ -488,11 +491,6 @@
     <Compile Include="Notifications\IObjectEventSubscrption.cs" />
     <Compile Include="Notifications\ObjectEventSubscription.cs" />
     <Compile Include="Notifications\ObjectEventSubscrptionList.cs" />
-    <None Include="FileSystem\ToBeFixed\Directory.cs" />
-    <None Include="FileSystem\ToBeFixed\File.cs" />
-    <None Include="FileSystem\ToBeFixed\IDirectory.cs" />
-    <None Include="FileSystem\ToBeFixed\IFile.cs" />
-    <None Include="FileSystem\ToBeFixed\IFileSystemObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs" />
     <Compile Include="SubjectEngager.cs" />
@@ -505,7 +503,6 @@
     </None>
     <None Include="Items\ToBeFixed\ParentedList.cs" />
     <Compile Include="Time\TimeText.cs" />
-    <None Include="FileSystem\ToBeFixed\FileSystemObject.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

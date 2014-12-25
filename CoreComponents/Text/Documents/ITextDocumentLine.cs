@@ -10,15 +10,15 @@ namespace CoreComponents.Text.Documents
     public interface ITextDocumentLine : IEnumerable<char>, IEnumerable
     {
 
-        event EventInfo<char> Added;
+        event EventInfoHandler<char> Added;
 
-        event EventInfo<IndexedDocumentItemEvent<char>> Inserted;
+        event EventInfoHandler<IndexedDocumentItemEvent<char>> Inserted;
 
-        event EventInfo<IndexedDocumentItemEvent<char>> InsertedOver;
+        event EventInfoHandler<IndexedDocumentItemEvent<char>> InsertedOver;
 
-        event EventInfo<char> Removed;
+        event EventInfoHandler<char> Removed;
 
-        event EventInfo<IndexedDocumentItemEvent<char>> RemovedAt;
+        event EventInfoHandler<IndexedDocumentItemEvent<char>> RemovedAt;
 
         //event EventInfo<IEnumerable<char>> AddedSet;
 
@@ -26,7 +26,7 @@ namespace CoreComponents.Text.Documents
 
         //event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedOverSet;
 
-        event EventInfo<IEnumerable<char>> RemovedSet;
+        event EventInfoHandler<IEnumerable<char>> RemovedSet;
 
         //event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> RemovedAtSet;
 

@@ -10,25 +10,25 @@ namespace CoreComponents.Text.Documents
     public class TextDocumentLine : ITextDocumentLine
     {
 
-        public event EventInfo<char> Added;
+        public event EventInfoHandler<char> Added;
 
-        public event EventInfo<IndexedDocumentItemEvent<char>> Inserted;
+        public event EventInfoHandler<IndexedDocumentItemEvent<char>> Inserted;
 
-        public event EventInfo<IndexedDocumentItemEvent<char>> InsertedOver;
+        public event EventInfoHandler<IndexedDocumentItemEvent<char>> InsertedOver;
 
-        public event EventInfo<char> Removed;
+        public event EventInfoHandler<char> Removed;
 
-        public event EventInfo<IndexedDocumentItemEvent<char>> RemovedAt;
+        public event EventInfoHandler<IndexedDocumentItemEvent<char>> RemovedAt;
 
-        //public event EventInfo<IEnumerable<char>> AddedSet;
+        //public event EventHandler<IEnumerable<char>> AddedSet;
 
-        public event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedSet;
+        public event EventInfoHandler<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedSet;
 
-        //public event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedOverSet;
+        //public event EventHandler<IndexedDocumentItemEvent<IEnumerable<char>>> InsertedOverSet;
 
-        public event EventInfo<IEnumerable<char>> RemovedSet;
+        public event EventInfoHandler<IEnumerable<char>> RemovedSet;
 
-        //public event EventInfo<IndexedDocumentItemEvent<IEnumerable<char>>> RemovedAtSet;
+        //public event EventHandler<IndexedDocumentItemEvent<IEnumerable<char>>> RemovedAtSet;
 
         protected List<char> myList = new List<char>();
 
