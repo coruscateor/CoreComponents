@@ -43,7 +43,7 @@ namespace CoreComponents
             get
             {
 
-                return myItem != null;
+                return myItem == null;
 
             }
 
