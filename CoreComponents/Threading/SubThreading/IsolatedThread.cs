@@ -1,88 +1,85 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CoreComponents.Threading.SubThreading
 {
 
-    public abstract class IsolatedThread : BaseIsolatedThread, ISubThread
+    public abstract class IsolatedThread<TID> : BaseIsolatedThread, IIsolatedThread, IDisposable
     {
 
-        private ConcurrentInputQueueContainer<object> myInputQueueContainer;
+        //private InputQueue myInputQueue;
 
-        private ConcurrentOutputQueueContainer<object> myOutputQueueContainer;
+        private ConcurrentQueue<object> myQueue;
 
-        private ConcurrentReadOnlyState<string, object> myReadOnlyState;
-
-        private ConcurrentAsynchronousInputOutput<object, object> myThreadIO;
-
-        public IsolatedThread(int TheMaxStackSize = 0) : base(TheMaxStackSize)
+        public IsolatedThread(TID TheId, int TheMaxStackSize = 0)
+            : base(TheMaxStackSize)
         {
 
-            ConcurrentQueue<object> InputQueue = new ConcurrentQueue<object>();
-
-            ConcurrentQueue<object> OutputQueue = new ConcurrentQueue<object>();
-
-            myThreadIO = new ConcurrentAsynchronousInputOutput<object, object>(InputQueue, OutputQueue);
-
-            myInputQueueContainer = new ConcurrentInputQueueContainer<object>(InputQueue);
-
-            myOutputQueueContainer = new ConcurrentOutputQueueContainer<object>(OutputQueue);
-
-            myReadOnlyState = new ConcurrentReadOnlyState<string, object>(new ConcurrentDictionary<string, object>());
+            SetupQueue();
 
         }
 
-        protected IAsynchronousInputOutput<object, object> ThreadIO
+        public IsolatedThread(TID TheId, object LObj, int TheMaxStackSize = 0)
+            : base(LObj, TheMaxStackSize)
         {
 
-            get 
-            {
-
-                return myThreadIO;
-
-            }
+            SetupQueue();
 
         }
 
-        public IInputQueue<object> Input
+        private void SetupQueue()
         {
 
-            get
-            {
+            myQueue = new ConcurrentQueue<object>();
 
-                return myInputQueueContainer;
-
-            }
+            //myInputQueue = new InputQueue(this, myQueue);
 
         }
 
-        public IOutputQueue<object> Output
+        //public InputQueue InputQueue
+        //{
+
+        //    get
+        //    {
+
+        //        return myInputQueue;
+
+        //    }
+
+        //}
+
+        protected ConcurrentQueue<object> Queue
         {
 
             get
             {
 
-                return myOutputQueueContainer;
+                return myQueue;
 
             }
 
         }
 
-        public IReadOnlyState<string, object> State
-        {
+        //protected override void ThreadMain()
+        //{
 
-            get
-            {
+        //    object CurrentResult;
 
-                return myReadOnlyState;
+        //    if(myQueue.TryDequeue(out CurrentResult))
+        //        DoWork(CurrentResult);
+        //    else
+        //        DoWork();
 
-            }
+        //}
 
-        }
-        
+        //protected abstract void DoWork();
+
+        //protected abstract void DoWork(object InputItem);
+
     }
 
 }

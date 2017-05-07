@@ -6,7 +6,7 @@ using System.Text;
 namespace CoreComponents.Text
 {
     
-    public static class SBsAndArrays //: IToArray<char>
+    public static class SBsAndArrays
     {
 
         public static char[] ToArray(StringBuilder TheSB)
@@ -110,15 +110,6 @@ namespace CoreComponents.Text
             return false;
 
         }
-        
-        /*
-        public char[] ToArray()
-        {
-
-            throw new NotImplementedException();
-
-        }
-        */
 
     }
 

@@ -28,7 +28,7 @@ namespace CoreComponents
 
         }
 
-        public static async void UseAsync(Action TryAction, Action FinallyAction)
+        public static async Task UseAsync(Action TryAction, Action FinallyAction)
         {
 
             await Task.Run(() =>
@@ -69,7 +69,7 @@ namespace CoreComponents
 
         }
 
-        public static async void UseAsync<T>(T UsingObject, Action<T> TryAction, Action<T> FinallyAction)
+        public static async Task UseAsync<T>(T UsingObject, Action<T> TryAction, Action<T> FinallyAction)
         {
 
             await Task.Run(() =>
@@ -101,6 +101,43 @@ namespace CoreComponents
             return "No";
 
         }
+
+        public static int GetTicksRemaining()
+        {
+
+            unchecked
+            {
+
+                return int.MaxValue - Environment.TickCount;
+
+            }
+
+        }
+
+        //https://msdn.microsoft.com/en-us/library/system.environment.tickcount%28v=vs.110%29.aspx
+
+        //https://msdn.microsoft.com/en-us/library/system.datetime.ticks.aspx
+
+        //public static DateTime TicksElapseAt()
+        //{
+
+        //    return DateTime.Now.AddTicks((long)int.MaxValue - Environment.TickCount);
+
+        //}
+
+        //public static DateTime TicksElapseAtUtc()
+        //{
+
+        //    return DateTime.UtcNow.AddTicks((long)int.MaxValue - Environment.TickCount);
+
+        //}
+
+        //public static TimeSpan TicksElapseTimeSpan()
+        //{
+
+        //    return new TimeSpan((long)int.MaxValue - Environment.TickCount);
+
+        //}
 
     }
 

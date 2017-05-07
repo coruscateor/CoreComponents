@@ -12,6 +12,20 @@ namespace CoreComponents.Threading
 
         protected object myLockObject = new object();
 
+        public LockBase()
+        {
+
+            myLockObject = new object();
+
+        }
+
+        public LockBase(object LObj)
+        {
+
+            myLockObject = LObj;
+
+        }
+
     }
 
 }

@@ -7,59 +7,58 @@ using System.Threading;
 namespace CoreComponents.Threading
 {
 
-    //A reference container that gives you a bit longer than the next GC generation.
-
-    public abstract class BaseTemporalReference<TReference, TTimeOutInterval, TTimeSet> where TReference : class
+    public abstract class BaseTemporalReference<T>
+        where T : class
     {
 
-        private TReference myReference;
+        protected object myLockObject;
 
-        private SpinLock myReferenceSpinLock;
+        protected RegisteredWaitHandle myRegesteredWaitHandle;
 
-        private TTimeOutInterval myTimeOutInterval;
+        protected Semaphore mySemaphore = new Semaphore(1, 1);
 
-        private SpinLock myTimeOutSpinLock;
+        protected long myDefaultTime;
 
-        private RegisteredWaitHandle myRegesteredWaitHandle;
+        protected long myTimeOutInterval;
 
-        private SpinLock myRegesteredWaitHandleSpinlock;
+        protected const long myConstDefaultTime = 500L;
 
-        protected Semaphore mySemaphore;
+        protected const long myConstTimeOutInterval = 200L;
 
-        protected TTimeSet myTimeSet;
+        bool myIsIDisposable;
 
-        public BaseTemporalReference()
-        {
-        }
+        readonly bool myExecuteOnlyOnce;
 
-        protected void Initalise()
+        public BaseTemporalReference(bool ExOnlyOnce)
         {
 
-            mySemaphore = new Semaphore(1, 1);
+            myIsIDisposable = this is IDisposable;
+
+            myExecuteOnlyOnce = ExOnlyOnce;
 
         }
 
-        public bool HasReference
+        public long DefaultTimeLimit
         {
 
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
 
-                    myReferenceSpinLock.Enter(ref LockTaken);
-
-                    return myReference != null;
+                    return myDefaultTime;
 
                 }
-                finally
+
+            }
+            set
+            {
+
+                lock(myLockObject)
                 {
 
-                    if(LockTaken)
-                        myReferenceSpinLock.Exit();
+                    myDefaultTime = value;
 
                 }
 
@@ -67,194 +66,27 @@ namespace CoreComponents.Threading
 
         }
 
-        public bool TryGet(out TReference TheReference)
-        {
-
-            bool LockTaken = false;
-
-            try
-            {
-
-                myReferenceSpinLock.Enter(ref LockTaken);
-
-                if(myReference != null)
-                {
-
-                    TheReference = myReference;
-
-                    return true;
-
-                }
-
-            }
-            finally
-            {
-
-                if(LockTaken)
-                    myReferenceSpinLock.Exit();
-
-            }
-
-            TheReference = null;
-
-            return false;
-
-        }
-
-        public TTimeSet TimeSet
+        public long TimeOutInterval
         {
 
             get
             {
 
-                return myTimeSet;
-
-            }
-
-        }
-
-        public abstract bool TryGetETD(out TTimeOutInterval TheETD);
-
-        protected void DropReference(object TheState, bool TimedOut)
-        {
-
-            if(!TimedOut)
-                return;
-
-            bool LockTaken = false;
-
-            try
-            {
-
-                myReferenceSpinLock.Enter(ref LockTaken);
-
-                myReference = null;
-
-            }
-            finally
-            {
-
-                if(LockTaken)
-                    myReferenceSpinLock.Exit();
-
-            }
-
-            UnregesterRegesteredWaitHandle();
-
-        }
-
-        protected void UnregesterRegesteredWaitHandle()
-        {
-
-            bool LockTaken = false;
-
-            myRegesteredWaitHandleSpinlock.Enter(ref LockTaken);
-
-            RegisteredWaitHandle RWH = myRegesteredWaitHandle;
-
-            myRegesteredWaitHandle = null;
-
-            if(LockTaken)
-                myRegesteredWaitHandleSpinlock.Exit();
-
-            RWH.Unregister(mySemaphore);
-
-        }
-
-        public void SetRegisteredWaitHandle(RegisteredWaitHandle TheRegisteredWaitHandle)
-        {
-
-            bool LockTaken = false;
-
-            myRegesteredWaitHandleSpinlock.Enter(ref LockTaken);
-
-            myRegesteredWaitHandle = TheRegisteredWaitHandle;
-
-            if(LockTaken)
-                myRegesteredWaitHandleSpinlock.Exit();
-
-        }
-
-        public bool IsActiveOrWaiting
-        {
-
-            get
-            {
-
-                bool LockTaken = false;
-
-                myRegesteredWaitHandleSpinlock.Enter(ref LockTaken);
-
-                try
+                lock(myLockObject)
                 {
-
-                    return myRegesteredWaitHandle != null;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myRegesteredWaitHandleSpinlock.Exit();
-
-                }
-
-            }
-
-        }
-
-        protected void CheckIfActiveOrWaiting()
-        {
-
-            if(IsActiveOrWaiting)
-                UnregesterRegesteredWaitHandle();
-
-        }
-
-        public TTimeOutInterval TimeOutInterval
-        {
-
-            get
-            {
-
-                bool LockTaken = false;
-
-                try
-                {
-
-                    myTimeOutSpinLock.Enter(ref LockTaken);
 
                     return myTimeOutInterval;
 
                 }
-                finally
-                {
 
-                    if(LockTaken)
-                        myTimeOutSpinLock.Exit();
-
-                }
-                
             }
-            protected set
+            set
             {
 
-
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    myTimeOutSpinLock.Enter(ref LockTaken);
 
                     myTimeOutInterval = value;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myTimeOutSpinLock.Exit();
 
                 }
 
@@ -262,7 +94,171 @@ namespace CoreComponents.Threading
 
         }
 
-        public abstract void Set(TReference TheReference, TTimeOutInterval TheMillisecondsTimeoutInterval);
+        public void Set(long TheDefaultTimeLimit, long TheTimeOutInterval)
+        {
+
+            lock(myLockObject)
+            {
+
+                myDefaultTime = TheDefaultTimeLimit;
+
+                long CurrentTimeOutInterval = myTimeOutInterval;
+
+                myTimeOutInterval = TheDefaultTimeLimit;
+
+                if(IsRegestered && myTimeOutInterval != CurrentTimeOutInterval)
+                {
+
+                    ResetWaitHandle();
+
+                }
+
+            }
+
+        }
+
+        protected bool IsIDisposable
+        {
+
+            get
+            {
+
+                return myIsIDisposable;
+
+            }
+
+        }
+
+        protected void Unregister()
+        {
+
+            myRegesteredWaitHandle.Unregister(mySemaphore);
+
+            myRegesteredWaitHandle = null;
+
+        }
+
+        protected void ResetWaitHandle()
+        {
+
+            myRegesteredWaitHandle.Unregister(mySemaphore);
+
+            Setup();
+
+        }
+
+        public void Reset()
+        {
+
+            lock(myLockObject)
+            {
+
+                if(IsRegestered)
+                    ResetWaitHandle();
+
+            }
+
+        }
+
+        public void ResetTimeOutInterval(long TheTimeOutInterval)
+        {
+
+            lock(myLockObject)
+            {
+
+                myTimeOutInterval = TheTimeOutInterval;
+
+                if(IsRegestered)
+                    ResetWaitHandle();
+
+            }
+
+        }
+
+        public void Stop()
+        {
+
+            lock(myLockObject)
+            {
+
+                if(IsRegestered)
+                    Unregister();
+
+            }
+
+        }
+
+        public void Start()
+        {
+
+            lock(myLockObject)
+            {
+
+                if(!IsRegestered)
+                    Setup();
+
+            }
+
+        }
+
+        protected bool IsRegestered
+        {
+
+            get
+            {
+
+                return myRegesteredWaitHandle != null;
+
+            }
+
+        }
+
+        public bool IsActive
+        {
+
+            get
+            {
+
+                lock(myLockObject)
+                {
+
+                    return IsRegestered;
+
+                }
+
+            }
+
+        }
+
+        protected void Setup()
+        {
+
+            //if(IsRegestered)
+            //    myRegesteredWaitHandle.Unregister(mySemaphore);
+
+            //myRegesteredWaitHandle = ThreadPooling.RegisterWaitForSingleObject(mySemaphore, CheckAndDeReference, null, myTimeOutInterval, myExecuteOnlyOnce);
+
+        }
+
+        protected void SetupIfInActive()
+        {
+
+            if(!IsRegestered)
+                Setup();
+
+        }
+
+        protected abstract void CheckAndDeReference(object TheState, bool TimedOut);
+
+        protected void Dispose(T Item)
+        {
+
+            IDisposable DisposableItem = Item as IDisposable;
+
+            if(DisposableItem != null)
+                DisposableItem.Dispose();
+
+        }
 
     }
 

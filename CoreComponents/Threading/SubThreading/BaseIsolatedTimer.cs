@@ -8,79 +8,144 @@ using System.Threading;
 namespace CoreComponents.Threading.SubThreading
 {
 
-    public abstract class BaseIsolatedTimer : ISubThread, IDisposable
+    public abstract class BaseIsolatedTimer : IIsolatedThread, IDisposable
     {
 
         private Timer myTimer;
 
-        private object myProvidedState;
+        private object myLockObject;
 
         private long myDefaultDueTime;
 
         private long myDefaultPeriod;
 
-        private bool myLastExecutionSuccessful;
+        private bool myLastChangeSuccessful;
 
         private bool myIsActive;
 
-        //private ConcurrentQueue<KeyValuePair<int, DateTime>> myReentracyAttepts = new ConcurrentQueue<KeyValuePair<int, DateTime>>();
+        private Exception myException;
 
-        public BaseIsolatedTimer() 
+        public BaseIsolatedTimer(object lockObject = null) 
         {
 
             myTimer = new Timer(RunThreadMain);
-            
+
+            if(lockObject == null)
+                lockObject = new object();
+            else
+                myLockObject = lockObject;
+
         }
 
-        public BaseIsolatedTimer(int TheDueTime, int ThePeriod, object TheProvidedState = null)
+        public BaseIsolatedTimer(int TheDueTime, int ThePeriod, object lockObject = null)
         {
 
-            myTimer = new Timer(RunThreadMain, TheProvidedState, TheDueTime, ThePeriod);
+            myTimer = new Timer(RunThreadMain, null, TheDueTime, ThePeriod);
 
             myDefaultDueTime = TheDueTime;
 
             myDefaultPeriod = ThePeriod;
 
-            myProvidedState = TheProvidedState;
+            if(lockObject == null)
+                lockObject = new object();
+            else
+                myLockObject = lockObject;
 
         }
 
-        public BaseIsolatedTimer(long TheDueTime, long ThePeriod, object TheProvidedState = null)
+        public BaseIsolatedTimer(long TheDueTime, long ThePeriod, object lockObject = null)
         {
 
-            myTimer = new Timer(RunThreadMain, TheProvidedState, TheDueTime, ThePeriod);
+            myTimer = new Timer(RunThreadMain, null, TheDueTime, ThePeriod);
 
             myDefaultDueTime = TheDueTime;
 
             myDefaultPeriod = ThePeriod;
 
-            myProvidedState = TheProvidedState;
+            if(lockObject == null)
+                lockObject = new object();
+            else
+                myLockObject = lockObject;
 
         }
 
-        public BaseIsolatedTimer(TimeSpan TheDueTime, TimeSpan ThePeriod, object TheProvidedState = null)
+        public BaseIsolatedTimer(TimeSpan TheDueTime, TimeSpan ThePeriod, object lockObject = null)
         {
 
-            myTimer = new Timer(RunThreadMain, TheProvidedState, TheDueTime, ThePeriod);
+            myTimer = new Timer(RunThreadMain, null, TheDueTime, ThePeriod);
 
             myDefaultDueTime = Convert.ToInt64(TheDueTime.TotalMilliseconds);
 
             myDefaultPeriod = Convert.ToInt64(ThePeriod.TotalMilliseconds);
 
-            myProvidedState = TheProvidedState;
+            if(lockObject == null)
+                lockObject = new object();
+            else
+                myLockObject = lockObject;
 
         }
 
-        public BaseIsolatedTimer(uint TheDueTime, uint ThePeriod, object TheProvidedState = null)
+        public BaseIsolatedTimer(uint TheDueTime, uint ThePeriod, object lockObject = null)
         {
 
-            myTimer = new Timer(RunThreadMain, TheProvidedState, TheDueTime, ThePeriod);
+            myTimer = new Timer(RunThreadMain, null, TheDueTime, ThePeriod);
 
             myDefaultDueTime = TheDueTime;
 
             myDefaultPeriod = ThePeriod;
 
-            myProvidedState = TheProvidedState;
+            if(lockObject == null)
+                lockObject = new object();
+            else
+                myLockObject = lockObject;
+
+        }
+
+        public Exception Exception
+        {
+
+            get
+            {
+
+                lock(myLockObject)
+                {
+
+                    return myException;
+
+                }
+
+            }
+
+        }
+
+        public bool TryGetException(out Exception Ex)
+        {
+
+            lock(myLockObject)
+            {
+
+                Ex = myException;
+
+            }
+
+            return Ex != null;
+
+        }
+
+        public bool HasException
+        {
+
+            get
+            {
+
+                lock(myLockObject)
+                {
+
+                    return myException != null;
+
+                }
+
+            }
 
         }
 
@@ -89,14 +154,34 @@ namespace CoreComponents.Threading.SubThreading
         private void RunThreadMain(object TheState) 
         {
 
-            Thread.MemoryBarrier();
+            bool HasLock = Monitor.TryEnter(this);
 
-            if (!myIsActive)
+            if(!HasLock)
             {
 
-                myIsActive = true;
+                lock(myLockObject)
+                {
 
-                Thread.MemoryBarrier();
+                    myException = new ReentrancyException("Reentrant call detected");
+
+                }
+
+                return;
+
+            }
+
+            if(!IsActive)
+            {
+
+                lock(myLockObject)
+                {
+
+                    myIsActive = true;
+
+                    if(myException != null)
+                        myException = null;
+
+                }
 
                 try
                 {
@@ -104,58 +189,40 @@ namespace CoreComponents.Threading.SubThreading
                     ThreadMain();
 
                 }
+                catch(Exception Ex)
+                {
+
+                    lock(myLockObject)
+                    {
+
+                        myException = Ex;
+
+                    }
+
+                }
                 finally
                 {
 
-                    myIsActive = false;
-
-                    Thread.MemoryBarrier();
+                    IsActive = false;
 
                 }
 
             }
-            //else 
-            //{
 
-            //    lock (myTimer)
-            //    {
-
-            //       KeyValuePair<int, DateTime> ThreadIdAndDateTime =  new KeyValuePair<int, DateTime>(Thread.CurrentThread.ManagedThreadId, DateTime.Now);
-
-            //       myReentracyAttepts.Enqueue(ThreadIdAndDateTime);
-
-            //    }
-
-
-            //}
+            Monitor.Exit(this);
 
         }
-
-        //public Timer TheTimer
-        //{
-
-        //    get
-        //    {
-
-        //        return myTimer;
-
-        //    }
-
-        //}
 
         public void Start()
         {
 
-            Thread.MemoryBarrier();
+            lock(myLockObject)
+            {
 
-            long CurrentDefaultTime = myDefaultDueTime;
+                myLastChangeSuccessful = myTimer.Change(myDefaultDueTime, myDefaultPeriod);
 
-            Thread.MemoryBarrier();
+            }
 
-            long CurrentDefaultPeriod = myDefaultPeriod;
-
-            myLastExecutionSuccessful = myTimer.Change(CurrentDefaultTime, CurrentDefaultPeriod);
-            
         }
 
         public long DefaultDueTime 
@@ -164,17 +231,25 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                return myDefaultDueTime;
+                    return myDefaultDueTime;
+
+                }
 
             }
             set
             {
 
-                myDefaultDueTime = value;
+                lock(myLockObject)
+                {
 
-                Thread.MemoryBarrier();
+                    myDefaultDueTime = value;
+
+                    myLastChangeSuccessful = myTimer.Change(value, myDefaultPeriod);
+
+                }
 
             }
 
@@ -186,17 +261,55 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                return myDefaultPeriod;
+                    return myDefaultPeriod;
+
+                }
 
             }
             set
             {
 
-                myDefaultPeriod = value;
+                lock(myLockObject)
+                {
 
-                Thread.MemoryBarrier();
+                    myDefaultPeriod = value;
+
+                    myLastChangeSuccessful = myTimer.Change(myDefaultDueTime, value);
+
+                }
+
+            }
+
+        }
+
+        public void GetDefaultDueTimeAndPeriod(out long defaultDueTime, out long defaultPeriod)
+        {
+
+            lock(myLockObject)
+            {
+
+                defaultDueTime = myDefaultDueTime;
+
+                defaultPeriod = myDefaultPeriod;
+
+            }
+
+        }
+
+        public void SetDefaultDueTimeAndPeriod(long defaultDueTime, long defaultPeriod)
+        {
+
+            lock(myLockObject)
+            {
+
+                myDefaultDueTime = defaultDueTime;
+
+                myDefaultPeriod = defaultPeriod;
+
+                myLastChangeSuccessful = myTimer.Change(defaultDueTime, defaultPeriod);
 
             }
 
@@ -205,43 +318,27 @@ namespace CoreComponents.Threading.SubThreading
         public void Stop()
         {
 
-            myLastExecutionSuccessful = myTimer.Change(Timeout.Infinite, Timeout.Infinite);
-
-        }
-
-        public bool LastExecutionSuccessful 
-        {
-
-            get 
+            lock(myLockObject)
             {
 
-                Thread.MemoryBarrier();
-
-                return myLastExecutionSuccessful;
+                myLastChangeSuccessful = myTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
             }
 
         }
 
-        protected object TheProvidedState 
+        public bool LastChangeSuccessful 
         {
 
             get 
             {
 
-                return myProvidedState;
+                lock(myLockObject)
+                {
 
-            }
+                    return myLastChangeSuccessful;
 
-        }
-
-        protected bool HasProvidedState
-        {
-
-            get
-            {
-
-                return myProvidedState != null;
+                }
 
             }
 
@@ -253,9 +350,23 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                return myIsActive;
+                    return myIsActive;
+
+                }
+
+            }
+            private set
+            {
+
+                lock(myLockObject)
+                {
+
+                    myIsActive = value;
+
+                }
 
             }
 
@@ -286,37 +397,6 @@ namespace CoreComponents.Threading.SubThreading
             myTimer.Dispose(TheNotifyObject);
 
         }
-
-        //public bool HasHadReentrancyAttempts
-        //{
-
-        //    get
-        //    {
-
-        //        return myReentracyAttepts.Count > 0;
-
-        //    }
-
-        //}
-
-        //public int ReentrancyAttemptCount
-        //{
-
-        //    get
-        //    {
-
-        //        return myReentracyAttepts.Count;
-
-        //    }
-
-        //}
-
-        //public IEnumerator<KeyValuePair<int, DateTime>> GetReentrancyAttemptsEnumerator()
-        //{
-
-        //    return myReentracyAttepts.GetEnumerator();
-
-        //}
         
     }
 

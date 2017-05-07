@@ -1,110 +1,108 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CoreComponents.Threading.SubThreading
 {
 
-    public abstract class IsolatedTimer : BaseIsolatedTimer, ISubThread
+    public abstract class IsolatedTimer : BaseIsolatedTimer, IIsolatedThread, IDisposable
     {
 
-        private ConcurrentInputQueueContainer<object> myInputQueueContainer;
+        private InputQueue myInputQueue;
 
-        private ConcurrentOutputQueueContainer<object> myOutputQueueContainer;
+        private ConcurrentQueue<object> myQueue;
 
-        private ConcurrentAsynchronousInputOutput<object, object> myThreadIO;
-
-        public IsolatedTimer() : base()
-        {
-        }
-
-        public IsolatedTimer(int TheDueTime, int ThePeriod, object TheProvidedState = null)
-            : base(TheDueTime, ThePeriod, TheProvidedState)
+        public IsolatedTimer(object lockObject = null)
+            : base(lockObject)
         {
 
-            Initalise();
+            SetupQueue();
 
         }
 
-        public IsolatedTimer(long TheDueTime, long ThePeriod, object TheProvidedState = null)
-            : base(TheDueTime, ThePeriod, TheProvidedState)
+        public IsolatedTimer(int TheDueTime, int ThePeriod, object lockObject = null)
+            : base(TheDueTime, ThePeriod, lockObject)
         {
 
-            Initalise();
+            SetupQueue();
 
         }
 
-        public IsolatedTimer(TimeSpan TheDueTime, TimeSpan ThePeriod, object TheProvidedState = null)
-            : base(TheDueTime, ThePeriod, TheProvidedState)
+        public IsolatedTimer(long TheDueTime, long ThePeriod, object lockObject = null)
+            : base(TheDueTime, ThePeriod, lockObject)
         {
 
-            Initalise();
+            SetupQueue();
 
         }
 
-        public IsolatedTimer(uint TheDueTime, uint ThePeriod, object TheProvidedState = null)
-            : base(TheDueTime, ThePeriod, TheProvidedState)
+        public IsolatedTimer(TimeSpan TheDueTime, TimeSpan ThePeriod, object lockObject = null)
+            : base(TheDueTime, ThePeriod, lockObject)
         {
 
-            Initalise();
+            SetupQueue();
 
         }
 
-        private void Initalise()
+        public IsolatedTimer(uint TheDueTime, uint ThePeriod, object lockObject = null)
+            : base(TheDueTime, ThePeriod, lockObject)
         {
 
-            ConcurrentQueue<object> InputQueue = new ConcurrentQueue<object>();
-
-            ConcurrentQueue<object> OutputQueue = new ConcurrentQueue<object>();
-
-            ConcurrentDictionary<string, object> Dictionary = new ConcurrentDictionary<string, object>();
-
-            myThreadIO = new ConcurrentAsynchronousInputOutput<object, object>(InputQueue, OutputQueue);
-
-            myInputQueueContainer = new ConcurrentInputQueueContainer<object>(InputQueue);
-
-            myOutputQueueContainer = new ConcurrentOutputQueueContainer<object>(OutputQueue);
+            SetupQueue();
 
         }
 
-        protected IAsynchronousInputOutput<object, object> ThreadIO
+        private void SetupQueue()
+        {
+
+            myQueue = new ConcurrentQueue<object>();
+
+            myInputQueue = new InputQueue(this, myQueue);
+
+        }
+
+        public InputQueue InputQueue
         {
 
             get
             {
 
-                return myThreadIO;
+                return myInputQueue;
 
             }
 
         }
 
-        public IInputQueue<object> Input
+        protected ConcurrentQueue<object> Queue
         {
 
             get
             {
 
-                return myInputQueueContainer;
+                return myQueue;
 
             }
 
         }
 
-        public IOutputQueue<object> Output
-        {
+        //protected override void ThreadMain()
+        //{
 
-            get
-            {
+        //    object CurrentResult;
 
-                return myOutputQueueContainer;
+        //    if(myQueue.TryDequeue(out CurrentResult))
+        //        DoWork(CurrentResult);
+        //    else
+        //        DoWork();
 
-            }
+        //}
 
-        }
+        //protected abstract void DoWork();
+
+        //protected abstract void DoWork(object InputItem);
 
     }
-
 }

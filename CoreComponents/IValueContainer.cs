@@ -19,7 +19,7 @@ namespace CoreComponents
 
     }
 
-    public interface IValueContainer<T> : IReadonlyValueContainer<T>
+    public interface IValueContainer<T> : IValueContainer, IReadonlyValueContainer<T>
     {
 
         new T Value

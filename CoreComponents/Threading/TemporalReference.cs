@@ -3,149 +3,111 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using CoreComponents.Time;
 
 namespace CoreComponents.Threading
 {
-    
-    public class TemporalReference<T> : BaseTemporalReference<T, int, int> where T : class
+
+    public sealed class TemporalReference<T> : BaseTemporalReference<T> where T : class
     {
 
+        T myReference;
+
+        long myTime;
+
         public TemporalReference()
+            : base(true)
         {
-
-            Initalise();
-
         }
 
-        public override void Set(T TheReference, int TheMillisecondsTimeoutInterval)
+        protected override void CheckAndDeReference(object TheState, bool TimedOut)
         {
 
-            CheckIfActiveOrWaiting();
+            if(!TimedOut)
+                return;
 
-            TimeOutInterval = TheMillisecondsTimeoutInterval;
-
-            SetRegisteredWaitHandle(ThreadPool.RegisterWaitForSingleObject(mySemaphore, DropReference, null, TheMillisecondsTimeoutInterval, true));
-
-            myTimeSet = Environment.TickCount;
-
-        }
-
-        public void SetSeconds(T TheReference, int TheSecondsTimeoutInterval)
-        {
-
-            Set(TheReference, TimeConversions.SecondsToMilliseconds(TheSecondsTimeoutInterval));
-
-        }
-
-        public void SetMinutes(T TheReference, int TheMinutesTimeoutInterval)
-        {
-
-            Set(TheReference, TimeConversions.MinutesToMilliseconds(TheMinutesTimeoutInterval));
-
-        }
-
-        public void SetHours(T TheReference, int TheHoursTimeoutInterval)
-        {
-
-            Set(TheReference, TimeConversions.HoursToMilliseconds(TheHoursTimeoutInterval));
-
-        }
-
-        public void SetDays(T TheReference, int TheDaysTimeoutInterval)
-        {
-
-            Set(TheReference, TimeConversions.HoursToMilliseconds(TheDaysTimeoutInterval));
-
-        }
-
-        public void SetDHMSMs(T TheReference, int TheDaysTimeoutInterval = 0, int TheHoursTimeoutInterval = 0, int TheMinutesTimeoutInterval = 0, int TheSecondsTimeoutInterval = 0, int TheMillisecondsTimeoutInterval = 0)
-        {
-
-            Set(TheReference, TimeConversions.DHMSToMilliseconds(TheDaysTimeoutInterval, TheHoursTimeoutInterval, TheMinutesTimeoutInterval, TheSecondsTimeoutInterval) + TheMillisecondsTimeoutInterval);
-
-        }
-
-        public void SetTimeSpan(T TheReference, TimeSpan TheTimeSpan)
-        {
-
-            Set(TheReference, TimeConversions.GetMilliseconds(TheTimeSpan));
-
-        }
-
-        public TimeSpan GetTimeSet()
-        {
-
-            int CurrentTimeSet = TimeSet;
-
-            return new TimeSpan(CurrentTimeSet);
-
-        }
-
-        public override bool TryGetETD(out int TheETD)
-        {
-
-            if(!IsActiveOrWaiting)
+            lock(myLockObject)
             {
 
-                TheETD = -1;
+                if(myReference != null)
+                {
 
-                return false;
+                    long Result = myTime - myTimeOutInterval;
+
+                    if(Result <= 0L)
+                    {
+
+                        myTime = 0L;
+
+                        if(IsIDisposable)
+                            Dispose(myReference);
+
+                        //Unregister();
+
+                    }
+                    else
+                        myTime = Result;
+
+
+                }
+                else
+                {
+
+                    myTime = 0L;
+
+                    //Unregister();
+
+                }
 
             }
 
-            int CurrentTime = Environment.TickCount;
+        }
 
-            int CurrentTimeSet = myTimeSet;
+        public T Reference
+        {
 
-            int CurrentTimeOutInterval = TimeOutInterval;
-
-            int OverByHowMuch;
-
-            //int UnderByHowMuch;
-
-            //Check if the tick count has been reset
-
-            if(Overflows.CheckIfIsOver(CurrentTime, CurrentTimeOutInterval, out OverByHowMuch))  //out UnderByHowMuch
+            get
             {
 
-                //Move everything back to Int32.MaxValue
+                lock(myLockObject)
+                {
 
-                TheETD = CurrentTimeOutInterval - (int.MaxValue - (CurrentTimeSet - OverByHowMuch));
+                    return myReference;
 
-                //(CurrentTime - OverByHowMuch)
-
-                return true;
+                }
 
             }
+            set
+            {
 
-            //TheETD = TimeSetPlusTimeOut - CurrentTime;
+                lock(myLockObject)
+                {
 
-            //The result of the current time minus time when set subtracted from the timeout interval 
+                    myReference = value;
 
-            TheETD = CurrentTimeOutInterval - (CurrentTime - CurrentTimeSet);
+                    myTime = myDefaultTime;
 
-            return true;
+                    Start();
+
+                }
+
+            }
 
         }
 
-        public bool TryGetETD(out TimeSpan TheETD)
+        public long Time
         {
 
-            int ETDResult;
-
-            if(TryGetETD(out ETDResult))
+            get
             {
 
-                TheETD = new TimeSpan(ETDResult);
+                lock(myLockObject)
+                {
 
-                return true;
+                    return myTime;
+
+                }
 
             }
-
-            TheETD = TimeSpan.MinValue;
-
-            return false;
 
         }
 

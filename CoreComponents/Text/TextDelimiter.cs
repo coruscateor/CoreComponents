@@ -5,6 +5,7 @@ using System.Text;
 
 namespace CoreComponents.Text
 {
+
     public static class TextDelimiter
     {
 
@@ -15,7 +16,7 @@ namespace CoreComponents.Text
 
             IEnumerator<string> Items = TheExpressions.GetEnumerator();
 
-            if (Items.MoveNext())
+            if(Items.MoveNext())
             {
 
                 TheSB.Append(Items.Current);
@@ -38,7 +39,7 @@ namespace CoreComponents.Text
 
             IEnumerator<string> Items = TheExpressions.GetEnumerator();
 
-            if (Items.MoveNext())
+            if(Items.MoveNext())
             {
 
                 TheSB.Append(Items.Current);

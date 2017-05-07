@@ -1,71 +1,132 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CoreComponents.Threading.SubThreading
 {
-
-    public abstract class IsolatedAppDomain : BaseIsolatedAppDomain, ISubThread
+    
+    public abstract class IsolatedAppDomain : BaseIsolatedAppDomain, IIsolatedThread
     {
 
-        private ConcurrentInputQueueContainer<object> myInputQueueContainer;
+        private InputQueue myInputQueue;
 
-        private ConcurrentOutputQueueContainer<object> myOutputQueueContainer;
+        private ConcurrentQueue<object> myQueue;
 
-        private ConcurrentAsynchronousInputOutput<object, object> myThreadIO;
+        //public IsolatedAppDomain(TID TheId)
+        //    : base(TheId)
+        //{
 
-        public IsolatedAppDomain(string TheName) : base(TheName)
+        //    SetupQueue();
+
+        //}
+
+        //public IsolatedAppDomain(TID TheId, string TheName)
+        //    : base(TheId, TheName)
+        //{
+
+        //    SetupQueue();
+
+        //}
+
+        //public IsolatedAppDomain(TID TheId, object LObj)
+        //    : base(TheId, LObj)
+        //{
+
+        //    SetupQueue();
+
+        //}
+
+        //public IsolatedAppDomain(TID TheId, string TheName, object LObj)
+        //    : base(TheId, TheName, LObj)
+        //{
+
+        //    SetupQueue();
+
+        //}
+
+        public IsolatedAppDomain()
+            : base()
         {
 
-            ConcurrentQueue<object> InputQueue = new ConcurrentQueue<object>();
-
-            ConcurrentQueue<object> OutputQueue = new ConcurrentQueue<object>();
-
-            myThreadIO = new ConcurrentAsynchronousInputOutput<object, object>(InputQueue, OutputQueue);
-
-            myInputQueueContainer = new ConcurrentInputQueueContainer<object>(InputQueue);
-
-            myOutputQueueContainer = new ConcurrentOutputQueueContainer<object>(OutputQueue);
+            SetupQueue();
 
         }
 
-        protected IAsynchronousInputOutput<object, object> ThreadIO
+        public IsolatedAppDomain(string TheName)
+            : base(TheName)
+        {
+
+            SetupQueue();
+
+        }
+
+        public IsolatedAppDomain(object LObj)
+            : base(LObj)
+        {
+
+            SetupQueue();
+
+        }
+
+        public IsolatedAppDomain(string TheName, object LObj)
+            : base(TheName, LObj)
+        {
+
+            SetupQueue();
+
+        }
+
+        private void SetupQueue()
+        {
+
+            myQueue = new ConcurrentQueue<object>();
+
+            myInputQueue = new InputQueue(this, myQueue);
+
+        }
+
+        public InputQueue InputQueue
         {
 
             get
             {
 
-                return myThreadIO;
+                return myInputQueue;
 
             }
 
         }
 
-        public IInputQueue<object> Input
+        protected ConcurrentQueue<object> Queue
         {
 
             get
             {
 
-                return myInputQueueContainer;
+                return myQueue;
 
             }
 
         }
 
-        public IOutputQueue<object> Output
-        {
+        //protected override void ThreadMain()
+        //{
+            
+        //    object CurrentResult;
 
-            get
-            {
+        //    if(myQueue.TryDequeue(out CurrentResult))
+        //        DoWork(CurrentResult);
+        //    else
+        //        DoWork();
 
-                return myOutputQueueContainer;
+        //}
 
-            }
+        //protected abstract void DoWork();
 
-        }
+        //protected abstract void DoWork(object InputItem);
 
     }
 

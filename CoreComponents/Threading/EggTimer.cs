@@ -7,26 +7,37 @@ using System.Threading;
 namespace CoreComponents.Threading
 {
 
-    public class EggTimer
+    public class EggTimer : LockBase
     {
 
         private RegisteredWaitHandle myRWH;
-
-        private SpinLock myRWHSpinLock;
-
-        private bool myUsesMemoryBarrier;
 
         private Semaphore mySemaphore;
 
         private DateTime myTimeout;
 
-        private SpinLock myTimeoutSpinLock;
+        private DateTime myTimedOutAt;
 
         private bool myHasTimedOut;
 
-        private DateTime myTimedOutAt;
-
         public EggTimer()
+            : base()
+        {
+
+            Initailse();
+
+        }
+
+        public EggTimer(object LObj)
+            : base(LObj)
+        {
+
+            Initailse();
+
+        }
+
+
+        protected void Initailse()
         {
 
             mySemaphore = new Semaphore(1, 1);
@@ -39,102 +50,58 @@ namespace CoreComponents.Threading
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    myRWHSpinLock.Enter(ref LockTaken);
 
                     return myRWH;
 
                 }
-                finally
+
+            }
+            set
+            {
+
+                lock(myLockObject)
                 {
 
-                    if(LockTaken)
-                        myRWHSpinLock.Exit(myUsesMemoryBarrier);
+                    myRWH = value;
 
                 }
 
             }
-            set
-            {
-
-                bool LockTaken = false;
-
-                myRWHSpinLock.Enter(ref LockTaken);
-
-                myRWH = value;
-
-                if(LockTaken)
-                    myRWHSpinLock.Exit(myUsesMemoryBarrier);
-
-            }
 
         }
 
-        public bool UsesMemoryBarrier
+        protected void NoLockReset()
         {
-
-            get
-            {
-
-                return myUsesMemoryBarrier;
-
-            }
-            set
-            {
-
-                myUsesMemoryBarrier = value;
-
-            }
-
-        }
-
-        protected void ResetRWH()
-        {
-
-            RegisteredWaitHandle RWH = null;
-
-            bool LockTaken = false;
-
-            myRWHSpinLock.Enter(ref LockTaken);
 
             if(myRWH != null)
             {
 
-                RWH = myRWH;
+                myRWH.Unregister(mySemaphore);
 
                 myRWH = null;
 
             }
 
-            if(LockTaken)
-                myRWHSpinLock.Exit(myUsesMemoryBarrier);
+            if(!myHasTimedOut)
+                myHasTimedOut = false;
 
-            if(RWH != null)
-                RWH.Unregister(mySemaphore);
+            myTimeout = DateTime.MinValue;
+
+            myTimedOutAt = DateTime.MinValue;
 
         }
 
         public void Reset()
         {
 
-            ResetRWH();
+            lock(myLockObject)
+            {
 
-            bool LockTaken = false;
+                NoLockReset();
 
-            myTimeoutSpinLock.Enter(ref LockTaken);
-
-            if(!myHasTimedOut)
-                myHasTimedOut = false;
-
-            if(myTimedOutAt != DateTime.MinValue)
-                myTimedOutAt = DateTime.MinValue;
-
-            if(LockTaken)
-                myTimeoutSpinLock.Exit(myUsesMemoryBarrier);
+            }
 
         }
 
@@ -190,18 +157,18 @@ namespace CoreComponents.Threading
 
                 DateTime Now = DateTime.Now;
 
-                bool LockTaken = false;
+                lock(myLockObject)
+                {
 
-                myTimeoutSpinLock.Enter(ref LockTaken);
+                    myHasTimedOut = true;
 
-                myHasTimedOut = true;
+                    myTimedOutAt = Now;
 
-                myTimedOutAt = Now;
+                    NoLockReset();
 
-                if(LockTaken)
-                    myTimeoutSpinLock.Exit(myUsesMemoryBarrier);
+                }
 
-                ResetRWH();
+                //ResetRWH();
 
             }
 
@@ -213,21 +180,10 @@ namespace CoreComponents.Threading
             get
             {
 
-                bool LockTaken = true;
-
-                try
+                lock(myLockObject)
                 {
-
-                    myTimeoutSpinLock.Enter(ref LockTaken);
 
                     return myTimeout;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myTimeoutSpinLock.Exit(myUsesMemoryBarrier);
 
                 }
 
@@ -235,14 +191,12 @@ namespace CoreComponents.Threading
             protected set
             {
 
-                bool LockTaken = true;
+                lock (myLockObject)
+                {
 
-                myTimeoutSpinLock.Enter(ref LockTaken);
+                    myTimeout = value;
 
-                myTimeout = value;
-
-                if(LockTaken)
-                    myTimeoutSpinLock.Exit(myUsesMemoryBarrier);
+                }
 
             }
 
@@ -251,14 +205,10 @@ namespace CoreComponents.Threading
         public bool TryGetTimeout(out DateTime TheTimeout)
         {
 
-            bool LockTaken = true;
-
-            try
+            lock(myLockObject)
             {
 
-                myTimeoutSpinLock.Enter(ref LockTaken);
-
-                if(!myHasTimedOut)
+                if(myTimeout != DateTime.MinValue)
                 {
 
                     TheTimeout = myTimeout;
@@ -266,13 +216,6 @@ namespace CoreComponents.Threading
                     return true;
 
                 }
-
-            }
-            finally
-            {
-
-                if(LockTaken)
-                    myTimeoutSpinLock.Exit(myUsesMemoryBarrier);
 
             }
 
@@ -288,21 +231,10 @@ namespace CoreComponents.Threading
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock (myLockObject)
                 {
-
-                    myTimeoutSpinLock.Enter(ref LockTaken);
 
                     return myHasTimedOut;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myTimeoutSpinLock.Exit(myUsesMemoryBarrier);
 
                 }
 
@@ -316,21 +248,10 @@ namespace CoreComponents.Threading
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock (myLockObject)
                 {
-
-                    myTimeoutSpinLock.Enter(ref LockTaken);
 
                     return myTimedOutAt;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        myTimeoutSpinLock.Exit(myUsesMemoryBarrier);
 
                 }
 
@@ -349,20 +270,18 @@ namespace CoreComponents.Threading
         public void OnHasTimedOut(Action<DateTime> TheAction)
         {
 
-            bool LockTaken = false;
-
             bool CurrentlyHasTimedOut;
 
             DateTime CurrentlyTimedOutAt;
 
-            myTimeoutSpinLock.Enter(ref LockTaken);
+            lock(myLockObject)
+            {
 
-            CurrentlyHasTimedOut = myHasTimedOut;
+                CurrentlyHasTimedOut = myHasTimedOut;
 
-            CurrentlyTimedOutAt = myTimedOutAt;
+                CurrentlyTimedOutAt = myTimedOutAt;
 
-            if(LockTaken)
-                myTimeoutSpinLock.Exit(myUsesMemoryBarrier);
+            }
 
             if(CurrentlyHasTimedOut)
                 TheAction(CurrentlyTimedOutAt);
@@ -380,25 +299,23 @@ namespace CoreComponents.Threading
         public bool TryGetTimedOutAt(out DateTime TheTime)
         {
 
-            bool LockTaken = false;
-
             bool CurrentlyHasTimedOut = false;
 
             DateTime CurrentlyHasTimedOutAt = DateTime.MinValue;
 
-            myTimeoutSpinLock.Enter(ref LockTaken);
-
-            if(myHasTimedOut)
+            lock(myLockObject)
             {
 
-                CurrentlyHasTimedOut = myHasTimedOut;
+                if(myHasTimedOut)
+                {
 
-                CurrentlyHasTimedOutAt = myTimedOutAt;
+                    CurrentlyHasTimedOut = myHasTimedOut;
+
+                    CurrentlyHasTimedOutAt = myTimedOutAt;
+
+                }
 
             }
-
-            if(LockTaken)
-                myTimeoutSpinLock.Exit(myUsesMemoryBarrier);
 
             if(CurrentlyHasTimedOut)
             {
@@ -438,29 +355,27 @@ namespace CoreComponents.Threading
         public bool TryGetTimeoutOverdue(out TimeSpan TheTimeSpan)
         {
 
-            bool LockTaken = false;
-
             bool HasCurrentlyTimedOut = false;
 
             DateTime CurrentTimeOut = DateTime.MinValue;
 
             DateTime CurrentTimeOutAt = CurrentTimeOut;
 
-            myTimeoutSpinLock.Enter(ref LockTaken);
-
-            if(myHasTimedOut)
+            lock (myLockObject)
             {
 
-                HasCurrentlyTimedOut = true;
+                if(myHasTimedOut)
+                {
 
-                CurrentTimeOut = myTimeout;
+                    HasCurrentlyTimedOut = true;
 
-                CurrentTimeOutAt = myTimedOutAt;
+                    CurrentTimeOut = myTimeout;
+
+                    CurrentTimeOutAt = myTimedOutAt;
+
+                }
 
             }
-
-            if(LockTaken)
-                myTimeoutSpinLock.Exit(myUsesMemoryBarrier);
 
             if(HasCurrentlyTimedOut)
             {

@@ -1,71 +1,84 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CoreComponents.Threading.SubThreading
 {
-    
-    public abstract class IsolatedWorkerThread : BaseIsolatedWorkerThread
+
+    public abstract class IsolatedWorkerThread : BaseIsolatedWorkerThread, IIsolatedThread
     {
 
-        private ConcurrentInputQueueContainer<object> myInputQueueContainer;
+        private InputQueue myInputQueue;
 
-        private ConcurrentOutputQueueContainer<object> myOutputQueueContainer;
-
-        private ConcurrentAsynchronousInputOutput<object, object> myThreadIO;
+        private ConcurrentQueue<object> myQueue;
 
         public IsolatedWorkerThread()
+            : base()
         {
 
-            ConcurrentQueue<object> InputQueue = new ConcurrentQueue<object>();
-
-            ConcurrentQueue<object> OutputQueue = new ConcurrentQueue<object>();
-
-            myThreadIO = new ConcurrentAsynchronousInputOutput<object, object>(InputQueue, OutputQueue);
-
-            myInputQueueContainer = new ConcurrentInputQueueContainer<object>(InputQueue);
-
-            myOutputQueueContainer = new ConcurrentOutputQueueContainer<object>(OutputQueue);
+            SetupQueue();
 
         }
 
-        protected IAsynchronousInputOutput<object, object> ThreadIO
+        public IsolatedWorkerThread(object LObject)
+            : base(LObject)
         {
 
-            get
-            {
-
-                return myThreadIO;
-
-            }
+            SetupQueue();
 
         }
 
-        public IInputQueue<object> Input
+        private void SetupQueue()
         {
 
-            get
-            {
+            myQueue = new ConcurrentQueue<object>();
 
-                return myInputQueueContainer;
-
-            }
+            myInputQueue = new InputQueue(this, myQueue);
 
         }
 
-        public IOutputQueue<object> Output
+        public InputQueue InputQueue
         {
 
             get
             {
 
-                return myOutputQueueContainer;
+                return myInputQueue;
 
             }
 
         }
+
+        protected ConcurrentQueue<object> Queue
+        {
+
+            get
+            {
+
+                return myQueue;
+
+            }
+
+        }
+
+        //protected override void ThreadMain()
+        //{
+
+        //    object CurrentResult;
+
+        //    if(myQueue.TryDequeue(out CurrentResult))
+        //        DoWork(CurrentResult);
+        //    else
+        //        DoWork();
+
+        //}
+
+        //protected abstract void DoWork();
+
+        //protected abstract void DoWork(object InputItem);
 
     }
 

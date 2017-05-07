@@ -43,18 +43,9 @@ namespace CoreComponents
         public bool TryGet(out T TheObject)
         {
 
-            if(myObject != null)
-            {
+            TheObject = myObject;
 
-                TheObject = myObject;
-
-                return true;
-
-            }
-
-            TheObject = null;
-
-            return false;
+            return TheObject != null;
 
         }
 

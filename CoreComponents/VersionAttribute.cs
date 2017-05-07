@@ -52,6 +52,15 @@ namespace CoreComponents
 
         }
 
+        public bool TryGetVersion(out string TheVersion)
+        {
+
+            TheVersion = myVersionString;
+
+            return TheVersion != null;
+
+        }
+
         public bool TryGetVersion(out Version TheVersion)
         {
 
@@ -67,24 +76,6 @@ namespace CoreComponents
             }
 
             TheVersion = null;
-
-            return false;
-
-        }
-
-        public bool TryGetVersion(Action<Version> TheVersionAction)
-        {
-
-            Version ParsedVersion;
-
-            if(Version.TryParse(myVersionString, out ParsedVersion))
-            {
-
-                TheVersionAction(ParsedVersion);
-
-                return true;
-
-            }
 
             return false;
 

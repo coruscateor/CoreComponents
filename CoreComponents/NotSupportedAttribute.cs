@@ -44,7 +44,7 @@ namespace CoreComponents
             get
             {
 
-                return myMessage.Length > 0;
+                return string.IsNullOrWhiteSpace(myMessage);
 
             }
 

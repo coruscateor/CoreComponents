@@ -6,7 +6,7 @@ using System.Text;
 namespace CoreComponents.Threading.SubThreading
 {
 
-    public abstract class BaseIsolatedAppDomain : ISubThread
+    public abstract class BaseIsolatedAppDomain : IIsolatedThread //<TID>
     {
 
         private AppDomain myAppDomian;
@@ -15,16 +15,62 @@ namespace CoreComponents.Threading.SubThreading
 
         private bool myStopRequested;
 
-        //private static ConcurrentLazyObject<Random> myLazyRandomObject;
+        private Exception myException;
+
+        //private readonly TID myId;
+
+        private object myLockObject;
+
+        //public BaseIsolatedAppDomain(TID TheId)
+        //{
+
+        //    myAppDomian = AppDomain.CreateDomain(GetDefaultName(), null);
+
+        //    myId = TheId;
+
+        //    myLockObject = new object();
+
+        //}
+
+        //public BaseIsolatedAppDomain(TID TheId, string TheName)
+        //{
+
+        //    myAppDomian = AppDomain.CreateDomain(TheName, null);
+
+        //    myId = TheId;
+
+        //    myLockObject = new object();
+
+        //}
+
+        //public BaseIsolatedAppDomain(TID TheId, object LObj)
+        //{
+
+        //    myAppDomian = AppDomain.CreateDomain(GetDefaultName(), null);
+
+        //    myId = TheId;
+
+        //    myLockObject = LObj;
+
+        //}
+
+        //public BaseIsolatedAppDomain(TID TheId, string TheName, object LObj)
+        //{
+
+        //    myAppDomian = AppDomain.CreateDomain(TheName, null);
+
+        //    myId = TheId;
+
+        //    myLockObject = LObj;
+
+        //}
 
         public BaseIsolatedAppDomain()
         {
 
-            //string TheName = "AppDomain" + myLazyRandomObject.Object.Next();
+            myAppDomian = AppDomain.CreateDomain(GetDefaultName(), null);
 
-            string TheName = "AppDomain_" + Environment.TickCount; 
-
-            myAppDomian = AppDomain.CreateDomain(TheName, null);
+            myLockObject = new object();
 
         }
 
@@ -32,7 +78,94 @@ namespace CoreComponents.Threading.SubThreading
         {
 
             myAppDomian = AppDomain.CreateDomain(TheName, null);
-            
+
+            myLockObject = new object();
+
+        }
+
+        public BaseIsolatedAppDomain(object LObj)
+        {
+
+            myAppDomian = AppDomain.CreateDomain(GetDefaultName(), null);
+
+            myLockObject = LObj;
+
+        }
+
+        public BaseIsolatedAppDomain(string TheName, object LObj)
+        {
+
+            myAppDomian = AppDomain.CreateDomain(TheName, null);
+
+            myLockObject = LObj;
+
+        }
+
+        //public TID Id
+        //{
+
+        //    get
+        //    {
+
+        //        return myId;
+
+        //    }
+
+        //}
+
+        public Exception Exception
+        {
+
+            get
+            {
+
+                lock(myLockObject)
+                {
+
+                    return myException;
+
+                }
+
+            }
+
+        }
+
+        public bool TryGetException(out Exception Ex)
+        {
+
+            lock(myLockObject)
+            {
+
+                Ex = myException;
+
+            }
+
+            return Ex != null;
+
+        }
+
+        public bool HasException
+        {
+
+            get
+            {
+
+                lock(myLockObject)
+                {
+
+                    return myException != null;
+
+                }
+
+            }
+
+        }
+
+        private static string GetDefaultName()
+        {
+
+            return "AppDomain_" + Environment.TickCount; 
+
         }
 
         protected abstract void ThreadMain();
@@ -41,40 +174,73 @@ namespace CoreComponents.Threading.SubThreading
         private void RunThreadMain()
         {
 
-            System.Threading.Thread.MemoryBarrier();
+            bool CurrentIsActive;
 
-            if(!myIsActive)
+            bool CurrentStopRequested;
+
+            lock(myLockObject)
             {
 
-                System.Threading.Thread.MemoryBarrier();
+                CurrentIsActive = myIsActive;
 
-                if(!myStopRequested)
+                CurrentStopRequested = myStopRequested;
+
+            }
+
+            if(!CurrentIsActive)
+            {
+
+                if(!CurrentStopRequested)
                 {
 
                     try
                     {
 
-                        myIsActive = true;
+                        if(!CurrentStopRequested)
+                        {
 
-                        System.Threading.Thread.MemoryBarrier();
+                            lock(myLockObject)
+                            {
 
-                        if (!myStopRequested)
-                            ThreadMain();
+                                myIsActive = true;
+
+                            }
+
+                            try
+                            {
+
+                                ThreadMain();
+
+                            }
+                            catch(Exception Ex)
+                            {
+
+                                lock(myLockObject)
+                                {
+
+                                    myException = Ex;
+
+                                }
+
+                            }
+
+                        }
 
                     }
                     finally
                     {
 
-                        myIsActive = false;
-
-                        System.Threading.Thread.MemoryBarrier();
-
-                        if(myStopRequested)
+                        lock(myLockObject)
                         {
 
-                            myStopRequested = false;
+                            myIsActive = false;
 
-                            System.Threading.Thread.MemoryBarrier();
+                            if(myStopRequested)
+                            {
+
+                                myStopRequested = false;
+
+                            }
 
                         }
 
@@ -84,9 +250,12 @@ namespace CoreComponents.Threading.SubThreading
                 else
                 {
 
-                    myStopRequested = false;
+                    lock(myLockObject)
+                    {
 
-                    System.Threading.Thread.MemoryBarrier();
+                        myStopRequested = false;
+
+                    }
 
                 }
 
@@ -97,19 +266,33 @@ namespace CoreComponents.Threading.SubThreading
         public void Start()
         {
 
-            System.Threading.Thread.MemoryBarrier();
+            bool CurrentIsActive;
 
-            if(!myIsActive)
+            bool CurrentStopRequested;
+
+            lock(myLockObject)
             {
 
-                System.Threading.Thread.MemoryBarrier();
+                CurrentIsActive = myIsActive;
 
-                if(myStopRequested)
+                CurrentStopRequested = myStopRequested;
+
+            }
+
+            if(!CurrentIsActive)
+            {
+
+                if(CurrentStopRequested)
                 {
 
-                    myStopRequested = false;
+                    lock(myLockObject)
+                    {
 
-                    System.Threading.Thread.MemoryBarrier();
+                        myStopRequested = false;
+
+                        return;
+
+                    }
 
                 }
 
@@ -118,28 +301,19 @@ namespace CoreComponents.Threading.SubThreading
             }
 
         }
-
-        //public AppDomain TheAppDomain
-        //{
-
-        //    get
-        //    {
-
-        //        return myAppDomian;
-
-        //    }
-
-        //}
-
+        
         public bool IsActive
         {
 
             get
             {
 
-                System.Threading.Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                return myIsActive;
+                    return myIsActive;
+
+                }
 
             }
 
@@ -148,20 +322,28 @@ namespace CoreComponents.Threading.SubThreading
         public void Stop()
         {
 
-            System.Threading.Thread.MemoryBarrier();
+            bool CurrentlyActive;
 
-            bool CurrentlyActive = myIsActive;
+            bool CurrentlyStopRequested;
 
-            System.Threading.Thread.MemoryBarrier();
+            lock(myLockObject)
+            {
 
-            bool CurrentlyStopRequested = myStopRequested;
+                CurrentlyActive = myIsActive;
+
+                CurrentlyStopRequested = myStopRequested;
+
+            }
 
             if(!CurrentlyActive && !CurrentlyStopRequested)
             {
 
-                myStopRequested = true;
+                lock(myLockObject)
+                {
 
-                System.Threading.Thread.MemoryBarrier();
+                    myStopRequested = true;
+
+                }
 
             }
 
@@ -173,38 +355,40 @@ namespace CoreComponents.Threading.SubThreading
             get 
             {
 
-                System.Threading.Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                return myStopRequested; 
-            
+                    return myStopRequested;
+
+                }
+
             }
 
         }
 
-        //public long MonitoringTotalAllocatedMemorySize
-        //{
+        public long MonitoringTotalAllocatedMemorySize
+        {
 
+            get
+            {
 
-        //    get
-        //    {
+                return myAppDomian.MonitoringTotalAllocatedMemorySize;
 
-        //        return myAppDomian.MonitoringTotalAllocatedMemorySize;
+            }
 
-        //    }
- 
-        //}
+        }
 
-        //public TimeSpan MonitoringTotalProcessorTime
-        //{
+        public TimeSpan MonitoringTotalProcessorTime
+        {
 
-        //    get
-        //    {
+            get
+            {
 
-        //        return myAppDomian.MonitoringTotalProcessorTime;
+                return myAppDomian.MonitoringTotalProcessorTime;
 
-        //    }
+            }
 
-        //}
+        }
 
     }
 

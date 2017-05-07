@@ -16,19 +16,19 @@ namespace CoreComponents
 
         }
 
-        bool HasValue
-        {
+        //bool HasValue
+        //{
 
-            get;
+        //    get;
 
-        }
+        //}
 
     }
 
-    public interface IReadonlyValueContainer<T>
+    public interface IReadonlyValueContainer<T> : IReadonlyValueContainer
     {
 
-        T Value
+        new T Value
         {
 
             get;

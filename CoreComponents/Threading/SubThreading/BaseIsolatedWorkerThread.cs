@@ -7,34 +7,52 @@ using System.Threading;
 namespace CoreComponents.Threading.SubThreading
 {
 
-    public abstract class BaseIsolatedWorkerThread : ISubThread
+    public abstract class BaseIsolatedWorkerThread : IIsolatedThread
     {
 
         private bool myIsActive;
 
         private bool myStopRequested;
 
-        private object myState;
-
         private Exception myException;
 
         private bool myIsContinuing;
 
-        private object myContinuationState;
+        private object myLockObject;
 
         public BaseIsolatedWorkerThread()
         {
+
+            myLockObject = new object();
+
+        }
+
+        public BaseIsolatedWorkerThread(object LObject)
+        {
+
+            myLockObject = LObject;
+
         }
 
         public void Start()
         {
 
-            Thread.MemoryBarrier();
-
-            if(!myIsActive)
+            if(!IsActive)
             {
 
-                Initialise();
+                lock(myLockObject)
+                {
+
+                    myIsActive = true;
+
+                    if(myException != null)
+                    {
+
+                        myException = null;
+
+                    }
+
+                }
 
                 try
                 {
@@ -45,62 +63,16 @@ namespace CoreComponents.Threading.SubThreading
                 catch
                 {
 
-                    myIsActive = false;
+                    lock(myLockObject)
+                    {
 
-                    Thread.MemoryBarrier();
+                        myIsActive = false;
 
-                    throw;
- 
-                }
+                        throw;
 
-            }
-
-        }
-
-        public void Start(object TheState)
-        {
-
-            Thread.MemoryBarrier();
-
-            if(!myIsActive)
-            {
-
-                Initialise();
-
-                try
-                {
-
-                    ThreadPool.QueueUserWorkItem(RunThreadMain, TheState);
+                    }
 
                 }
-                catch
-                {
-                    
-                    myIsActive = false;
-
-                    Thread.MemoryBarrier();
-
-                    throw;
-
-                }
-
-            }
-
-        }
-
-        private void Initialise()
-        {
-
-            myIsActive = true;
-
-            Thread.MemoryBarrier();
-
-            if(myException != null)
-            {
-
-                myException = null;
-
-                Thread.MemoryBarrier();
 
             }
 
@@ -109,49 +81,48 @@ namespace CoreComponents.Threading.SubThreading
         private void RunThreadMain(object TheState)
         {
 
-            if(TheState != null)
-                myState = TheState;
-            else if(myState != null)
-                myState = null;
+            bool stopRequested;
 
-            Thread.MemoryBarrier();
-
-            if(myIsContinuing)
+            lock(myLockObject)
             {
 
-                myIsContinuing = false;
-
-                Thread.MemoryBarrier();
+                stopRequested = myStopRequested;
 
             }
 
             try
             {
 
-                Thread.MemoryBarrier();
-
-                if(!myStopRequested)
+                if(!stopRequested)
                     ThreadMain();
 
             }
             catch(Exception e)
             {
 
-                myException = e;
+                lock(myLockObject)
+                {
 
-                Thread.MemoryBarrier();
+                    myException = e;
+
+                }
 
             }
             finally
             {
 
-                Thread.MemoryBarrier();
+                bool CurrentlyIsContinuing;
 
-                bool CurrentlyIsContinuing = myIsContinuing;
+                bool CurrentlyStopRequested;
 
-                Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                bool CurrentlyStopRequested = myStopRequested;
+                    CurrentlyIsContinuing = myIsContinuing;
+
+                    CurrentlyStopRequested = myStopRequested;
+
+                }
 
                 if(CurrentlyIsContinuing && !CurrentlyStopRequested)
                 {
@@ -159,32 +130,18 @@ namespace CoreComponents.Threading.SubThreading
                     try
                     {
 
-                        Thread.MemoryBarrier();
-
-                        if(myContinuationState == null)
-                        {
-
-                            ThreadPool.QueueUserWorkItem(RunThreadMain);
-
-                        }
-                        else
-                        {
-
-                            ThreadPool.QueueUserWorkItem(RunThreadMain, myContinuationState);
-
-                            myContinuationState = null;
-
-                        }
+                        ThreadPool.QueueUserWorkItem(RunThreadMain);
 
                     }
                     catch(Exception e)
                     {
 
-                        myException = e;
+                        lock(myLockObject)
+                        {
 
-                        Thread.MemoryBarrier();
+                            myException = e;
 
-                        Conclude();
+                        }
 
                     }
 
@@ -192,7 +149,7 @@ namespace CoreComponents.Threading.SubThreading
                 else
                 {
 
-                    Conclude();
+                    Finish();
 
                 }
 
@@ -200,32 +157,16 @@ namespace CoreComponents.Threading.SubThreading
 
         }
 
-        private void Conclude()
+        private void Finish()
         {
 
-            Thread.MemoryBarrier();
-
             if(myStopRequested)
-            {
-
                 myStopRequested = false;
 
-                Thread.MemoryBarrier();
-
-            }
-
             if(myIsContinuing)
-            {
-
                 myIsContinuing = false;
 
-                Thread.MemoryBarrier();
-
-            }
-
             myIsActive = false;
-
-            Thread.MemoryBarrier();
 
         }
 
@@ -237,10 +178,13 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                return myIsActive;
-            
+                    return myIsActive;
+
+                }
+
             }
 
         }
@@ -248,14 +192,15 @@ namespace CoreComponents.Threading.SubThreading
         public void Stop()
         {
 
-            Thread.MemoryBarrier();
-
-            if(!myStopRequested)
+            lock(myLockObject)
             {
 
-                myStopRequested = true;
+                if(!myStopRequested)
+                {
 
-                Thread.MemoryBarrier();
+                    myStopRequested = true;
+
+                }
 
             }
 
@@ -267,9 +212,12 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                return myStopRequested;
+                    return myStopRequested;
+
+                }
             
             }
 
@@ -278,58 +226,17 @@ namespace CoreComponents.Threading.SubThreading
         protected bool Continue()
         {
 
-            Thread.MemoryBarrier();
-
-            if(myContinuationState != null)
+            lock(myLockObject)
             {
 
-                myContinuationState = null;
+                if(!myIsContinuing)
+                {
 
-                Thread.MemoryBarrier();
+                    myIsContinuing = true;
 
-            }
+                    return true;
 
-            Thread.MemoryBarrier();
-
-            if(!myIsContinuing)
-            {
-
-                myIsContinuing = true;
-
-                Thread.MemoryBarrier();
-
-                return true;
-
-            }
-
-            return false;
-
-        }
-
-        protected bool Continue(object TheState)
-        {
-
-            Thread.MemoryBarrier();
-
-            if(myContinuationState != TheState)
-            {
-
-                myContinuationState = TheState;
-
-                Thread.MemoryBarrier();
-
-            }
-
-            Thread.MemoryBarrier();
-
-            if(!myIsContinuing)
-            {
-
-                myIsContinuing = true;
-
-                Thread.MemoryBarrier();
-
-                return true;
+                }
 
             }
 
@@ -343,9 +250,12 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                return myIsContinuing;
+                    return myIsContinuing;
+
+                }
 
             }
 
@@ -357,31 +267,12 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                return myIsContinuing;
+                lock(myLockObject)
+                {
 
-            }
+                    return myIsContinuing;
 
-        }
-
-        protected object State
-        {
-
-            get
-            {
-
-                return myState;
-
-            }
-
-        }
-
-        protected bool HasState
-        {
-            
-            get
-            {
-
-                return myState != null;
+                }
 
             }
 
@@ -393,11 +284,28 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                return myException;
+                    return myException;
+
+                }
 
             }
+
+        }
+
+        public bool TryGetException(out Exception Ex)
+        {
+
+            lock(myLockObject)
+            {
+
+                Ex = myException;
+
+            }
+
+            return Ex != null;
 
         }
 
@@ -407,9 +315,12 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                Thread.MemoryBarrier();
+                lock(myLockObject)
+                {
 
-                return myException != null;
+                    return myException != null;
+
+                }
 
             }
 

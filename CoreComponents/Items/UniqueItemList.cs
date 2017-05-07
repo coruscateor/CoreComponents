@@ -1,226 +1,73 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CoreComponents.Items
 {
 
-    public class UniqueItemList<T> : IUniqueItemList<T>, IListSource<T>, IToArray<T>, IEnumerable<T>
+    public sealed class UniqueItemList<T> : IEnumerable<T>, IEnumerable, IToArray<T>
     {
 
-        protected List<T> myItems;
+        readonly SList<T> myList;
 
         public UniqueItemList()
         {
 
-            myItems = new List<T>();
+            myList = new SList<T>();
 
         }
 
-        public UniqueItemList(IEnumerable<T> TheItems)
+        public UniqueItemList(int capacity)
         {
 
-            myItems = new List<T>();
+            myList = new SList<T>(capacity);
 
-            foreach(var Item in TheItems)
+        }
+
+        public UniqueItemList(IEnumerable<T> collection)
+        {
+
+            myList = new SList<T>();
+
+            //myList = new SList<T>(collection.Count());
+
+            foreach(var item in collection)
             {
 
-                if(!myItems.Contains(Item))
-                    myItems.Add(Item);
+                if(!myList.Contains(item))
+                    myList.Add(item);
 
             }
-
-        }
-
-        public int IndexOf(T item)
-        {
-
-            return myItems.IndexOf(item);
-
-        }
-
-
-        public void Insert(int index, T item)
-        {
-
-            if(!myItems.Contains(item))
-            {
-
-                myItems.Insert(index, item);
-
-                return;
-
-            }
-
-            throw new ItemIsAlreadyPresentException<T>(item);
-
-        }
-
-        public bool TryInsert(int index, T item)
-        {
-
-            if(!myItems.Contains(item))
-            {
-
-                myItems.Insert(index, item);
-
-                return true;
-
-            }
-
-            return false;
-
-        }
-
-        public void RemoveAt(int index)
-        {
-
-            myItems.RemoveAt(index);
 
         }
 
         public T this[int index]
         {
+
             get
             {
 
-                return myItems[index];
+                return myList[index];
 
             }
             set
             {
 
-                if(!myItems.Contains(value))
-                    myItems[index] = value;
-                else
-                    throw new Exception("Value already exists");
-
-            }
-
-        }
-
-        public bool TryGet(int TheIndex, out T TheItem)
-        {
-
-            if(myItems.Count > 0)
-            {
-
-                if(TheIndex > -1)
+                if(!myList.Contains(value))
                 {
 
-                    if(myItems.Count < TheIndex)
-                    {
+                    myList[index] = value;
 
-                        TheItem = myItems[TheIndex];
-
-                        return true;
-
-                    }
+                    return;
 
                 }
 
-            }
-
-            TheItem = default(T);
-
-            return false;
-
-        }
-
-        public bool TrySet(int TheIndex, T TheItem)
-        {
-
-            if(myItems.Count > 0)
-            {
-
-                if(TheIndex > -1)
-                {
-
-                    if(myItems.Count < TheIndex)
-                    {
-
-                        myItems[TheIndex] = TheItem;
-
-                        return true;
-
-                    }
-
-                }
+                throw new Exception("Duplicate item");
 
             }
-
-            return false;
-
-        }
-
-        public void Add(T item)
-        {
-
-            if(!myItems.Contains(item))
-            {
-
-                myItems.Add(item);
-
-                return;
-
-            }
-
-            throw new ItemIsAlreadyPresentException<T>(item);
-            
-        }
-
-        public bool TryAdd(T item)
-        {
-
-            if(!myItems.Contains(item))
-            {
-
-                myItems.Add(item);
-
-                return true;
-
-            }
-
-            return false;
-
-        }
-
-        public void AddRange(IEnumerable<T> TheItems)
-        {
-
-            foreach(var Item in TheItems)
-            {
-
-                if(!myItems.Contains(Item))
-                {
-
-                    myItems.Add(Item);
-
-                }
-
-            }
-
-        }
-
-        public void Clear()
-        {
-
-            myItems.Clear();
-
-        }
-
-        public bool Contains(T item)
-        {
-
-            return myItems.Contains(item);
-
-        }
-
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            
-            myItems.CopyTo(array, arrayIndex);
 
         }
 
@@ -229,118 +76,168 @@ namespace CoreComponents.Items
 
             get
             {
-                
-                return myItems.Count;
-            
+
+                return myList.Count;
+
             }
 
         }
 
-        public bool IsReadOnly
+        //public bool IsReadOnly
+        //{
+
+        //    get
+        //    {
+
+        //        return false;
+
+        //    }
+
+        //}
+
+        public bool TryAdd(T item)
         {
 
-            get
-            {
-                
+            if(myList.Contains(item))
                 return false;
+
+            myList.Add(item);
+
+            return false;
             
-            }
+        }
+
+        public void Clear()
+        {
+
+            myList.Clear();
 
         }
 
-        public int MoveUp(T TheItem)
+        public bool Contains(T item)
         {
 
-            int Index = myItems.IndexOf(TheItem);
-
-            if(Index < 1)
-                return -1;
-
-            if(Index > 0)
-            {
-
-                --Index;
-
-                myItems.Remove(TheItem);
-
-                myItems.Insert(Index, TheItem);
-
-            }
-
-            return Index;
+            return myList.Contains(item);
 
         }
 
-        public int MoveDown(T TheItem)
+        public void CopyTo(T[] array, int arrayIndex)
         {
 
-            int Index = myItems.IndexOf(TheItem);
+            myList.CopyTo(array, arrayIndex);
 
-            if(Index < 1)
-                return -1;
+        }
 
-            int LastIndex = myItems.Count - 1;
+        public IEnumerator<T> GetEnumerator()
+        {
 
-            if(Index < myItems.Count)
+            return myList.GetEnumerator();
+
+        }
+
+        public int IndexOf(T item)
+        {
+
+            return myList.IndexOf(item);
+
+        }
+
+        //public void Insert(int index, T item)
+        //{
+
+        //    if(!myList.Contains(item))
+        //    {
+
+        //        myList[index] = item;
+
+        //        return;
+
+        //    }
+
+        //    throw new Exception("Duplicate item");
+
+        //}
+
+        public bool TryInsert(int index, T item)
+        {
+
+            if(!myList.Contains(item))
             {
 
-                ++Index;
+                myList[index] = item;
 
-                myItems.Remove(TheItem);
-
-                --LastIndex;
-
-                if(Index >= LastIndex)
-                {
-
-                    myItems.Add(TheItem);
-
-                }
-                else
-                {
-
-                    myItems.Insert(Index, TheItem);
-
-                }
+                return true;
 
             }
 
-            return Index;
+            return false;
 
         }
 
         public bool Remove(T item)
         {
 
-            return myItems.Remove(item);
+            return myList.Remove(item);
 
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public void RemoveAt(int index)
         {
-            
-            return myItems.GetEnumerator();
+
+             myList.RemoveAt(index);
 
         }
 
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
 
-            return myItems.GetEnumerator();
+            return myList.GetEnumerator();
 
         }
-        
-        public List<T> ToList()
+
+        //public UniqueItemList(int capacity)
+        //{
+
+        //    myList = new SList<T>(capacity);
+
+        //}
+
+        public ImmutableArray<T> ToImmutableArray()
         {
 
-            return new List<T>(myItems);
+            return new ImmutableArray<T>(myList);
+
+        }
+
+        public void TrimExcess()
+        {
+
+            myList.TrimExcess();
 
         }
 
         public T[] ToArray()
         {
 
-            return myItems.ToArray();
+            return myList.ToArray();
+
+        }
+
+        object[] IToArray.ToArray()
+        {
+
+            int count = myList.Count;
+
+            object[] objs = new object[count];
+
+            for(int i = 0; i < count; i++)
+            {
+
+                objs[i] = myList[i];
+
+            }
+
+            return objs;
 
         }
 

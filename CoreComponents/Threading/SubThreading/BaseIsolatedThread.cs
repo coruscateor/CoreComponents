@@ -7,34 +7,38 @@ using System.Threading;
 namespace CoreComponents.Threading.SubThreading
 {
 
-    public abstract class BaseIsolatedThread : ISubThread, IDisposable
+    public abstract class BaseIsolatedThread : IIsolatedThread, IDisposable
     {
 
         private const string CannotWaitExceptionMessage = "Only the thread used by the IsolatedThread can wait on its sleep event";
 
-        private const string ContinueExceptionMessage = "Only the Thread contained by the IsolatedThread can set the continue variable";
+        private const string ContinueExceptionMessage = "Only the thread contained by the IsolatedThread can set the continue variable";
 
         private Thread myThread;
 
-        private object myParameter = null;
-
-        private Exception myException = null;
+        private Exception myException;
 
         private bool myStopRequested;
 
         private bool myIsActive;
 
+        //For the thread to sleep on
+
         private ManualResetEventSlim myWaitSleepEvent;
 
         private bool myIsWaitingForWake;
 
-        private SpinLock mySpinlock;
-
         private bool myHasExited;
+
+        //For other threads to sleep on
 
         private ManualResetEventSlim mySleepEvent;
 
         private int myMaxStackSize;
+
+        private object myLockObject;
+
+        private bool myIsContinuing;
 
         public BaseIsolatedThread(int TheMaxStackSize = 0)
         {
@@ -54,6 +58,39 @@ namespace CoreComponents.Threading.SubThreading
 
             }
 
+            myLockObject = new object();
+
+            InitialiseResetEvents();
+
+        }
+
+        public BaseIsolatedThread(object lockObject, int TheMaxStackSize = 0)
+        {
+
+            if(TheMaxStackSize > 0)
+            {
+
+                myMaxStackSize = TheMaxStackSize;
+
+                myThread = new Thread(RunThreadMain, TheMaxStackSize);
+
+            }
+            else
+            {
+
+                myThread = new Thread(RunThreadMain);
+
+            }
+
+            myLockObject = lockObject;
+
+            InitialiseResetEvents();
+
+        }
+
+        private void InitialiseResetEvents()
+        {
+            
             myWaitSleepEvent = new ManualResetEventSlim(false);
 
             mySleepEvent = new ManualResetEventSlim(true);
@@ -85,15 +122,6 @@ namespace CoreComponents.Threading.SubThreading
                     }
 
                     CopyThreadProperties(OldThread);
-
-                }
-
-                if(myWaitSleepEvent == null)
-                {
-                    
-                    myWaitSleepEvent = new ManualResetEventSlim(false);
-
-                    mySleepEvent = new ManualResetEventSlim(true);
 
                 }
 
@@ -132,41 +160,16 @@ namespace CoreComponents.Threading.SubThreading
 
         }
 
-        public void Start(object TheParameter)
-        {
-
-            if(!IsActive)
-            {
-
-                myParameter = TheParameter;
-
-                Start();
-
-            }
-
-        }
-
         public bool IsWaitingForWake
         {
 
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     return myIsWaitingForWake;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -174,12 +177,8 @@ namespace CoreComponents.Threading.SubThreading
             private set
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     myIsWaitingForWake = value;
 
@@ -187,13 +186,6 @@ namespace CoreComponents.Threading.SubThreading
                         myIsActive = false;
                     else
                         myIsActive = true;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -204,44 +196,36 @@ namespace CoreComponents.Threading.SubThreading
         private void IsNowWaitingForWake()
         {
 
-            bool LockTaken = false;
+            lock(myLockObject)
+            {
 
-            mySpinlock.Enter(ref LockTaken);
+                myIsWaitingForWake = true;
 
-            myIsWaitingForWake = true;
+                //myIsActive = false;
 
-            myIsActive = false;
-
-            if(LockTaken)
-                mySpinlock.Exit();
+            }
 
         }
 
         private void IsNotWaitingForWake()
         {
 
-            bool LockTaken = false;
+            lock(myLockObject)
+            {
 
-            mySpinlock.Enter(ref LockTaken);
+                myIsWaitingForWake = false;
 
-            myIsWaitingForWake = false;
+                //myIsActive = true;
 
-            myIsActive = true;
-
-            if(LockTaken)
-                mySpinlock.Exit();
+            }
 
         }
 
         private bool SetNotWaitingForWake()
         {
 
-            bool LockTaken = false;
-
-            try
+            lock(myLockObject)
             {
-
-                mySpinlock.Enter(ref LockTaken);
 
                 if(myIsWaitingForWake)
                 {
@@ -253,13 +237,6 @@ namespace CoreComponents.Threading.SubThreading
                     return true;
 
                 }
-
-            }
-            finally
-            {
-
-                if(LockTaken)
-                    mySpinlock.Exit();
 
             }
 
@@ -281,29 +258,6 @@ namespace CoreComponents.Threading.SubThreading
 
         }
 
-        public void ResetMaxStackSize(int TheMaxStackSize = 0)
-        {
-
-            if(myThread == Thread.CurrentThread && !myThread.IsAlive)
-            {
-
-                if(TheMaxStackSize < 0)
-                {
-
-                    myMaxStackSize = 0;
-
-                }
-                else
-                {
-
-                    myMaxStackSize = TheMaxStackSize;
-
-                }
-
-            }
-
-        }
-
         public int MaxStackSize
         {
 
@@ -311,6 +265,34 @@ namespace CoreComponents.Threading.SubThreading
             {
 
                 return myMaxStackSize;
+
+            }
+
+        }
+
+        public bool IsContinuing
+        {
+
+            get
+            {
+
+                lock(myLockObject)
+                {
+
+                    return myIsContinuing;
+
+                }
+
+            }
+            set
+            {
+
+                lock(myLockObject)
+                {
+
+                    myIsContinuing = value;
+
+                }
 
             }
 
@@ -387,24 +369,7 @@ namespace CoreComponents.Threading.SubThreading
         public void Abort()
         {
 
-            if(myThread.IsAlive)
-            {
-
-                myThread.Abort();
-
-            }
-
-        }
-
-        public void Abort(object StateInfo)
-        {
-
-            if(myThread.IsAlive)
-            {
-
-                myThread.Abort(StateInfo);
-
-            }
+            myThread.Abort();
 
         }
 
@@ -510,24 +475,13 @@ namespace CoreComponents.Threading.SubThreading
         public void Stop()
         {
 
-            if(myThread.IsAlive && !StopRequested)
+            lock(myLockObject)
             {
 
-                bool LockTaken = false;
-
-                try
+                if(myThread.IsAlive && !myStopRequested)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     myStopRequested = true;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -541,21 +495,10 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     return myStopRequested;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -563,21 +506,10 @@ namespace CoreComponents.Threading.SubThreading
             private set
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     myStopRequested = value;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -591,21 +523,10 @@ namespace CoreComponents.Threading.SubThreading
             get
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     return myHasExited;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -613,21 +534,10 @@ namespace CoreComponents.Threading.SubThreading
             private set
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     myHasExited = value;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -1092,43 +1002,20 @@ namespace CoreComponents.Threading.SubThreading
         private void RunThreadMain() 
         {
 
-            bool LockTaken = false;
-
-            try
+            lock(myLockObject)
             {
 
-                mySpinlock.Enter(ref LockTaken);
-
-                //SetNotExited
-
-                myHasExited = false;
-
-                //ResetStopRequested
+                if(!myHasExited)
+                    myHasExited = false;
 
                 if(myStopRequested)
                     myStopRequested = false;
 
-                //SetActive
-
-                myIsActive = true;
-
-                //RemoveException
+                if(!myIsActive)
+                    myIsActive = true;
 
                 if(myException != null)
                     myException = null;
-
-            }
-            finally
-            {
-
-                if(LockTaken)
-                {
-
-                    mySpinlock.Exit();
-
-                    LockTaken = false;
-
-                }
 
             }
 
@@ -1158,11 +1045,16 @@ namespace CoreComponents.Threading.SubThreading
 
                 }
 
+                if(IsContinuing)
+                    continue;
+
                 if(!StopRequested)
                 {
 
                     try
                     {
+
+                        //Sleep rather than exit
 
                         myWaitSleepEvent.Wait();
 
@@ -1193,25 +1085,12 @@ namespace CoreComponents.Threading.SubThreading
             }
             while(!StopRequested);
 
-            try
+            lock(myLockObject)
             {
-
-                mySpinlock.Enter(ref LockTaken);
-
-                //SetInActive
 
                 myIsActive = false;
 
-                //SetExited
-
                 myHasExited = true;
-
-            }
-            finally
-            {
-
-                if(LockTaken)
-                    mySpinlock.Exit();
 
             }
 
@@ -1223,21 +1102,10 @@ namespace CoreComponents.Threading.SubThreading
             get 
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     return myException;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -1245,21 +1113,10 @@ namespace CoreComponents.Threading.SubThreading
             private set
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     myException = value;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -1267,27 +1124,30 @@ namespace CoreComponents.Threading.SubThreading
         
         }
 
-        public bool CaughtException
+        public bool TryGetException(out Exception Ex)
+        {
+
+            lock(myLockObject)
+            {
+
+                Ex = myException;
+
+            }
+
+            return Ex != null;
+
+        }
+        
+        public bool HasException
         {
 
             get
             {
-                
-                bool LockTaken = false;
 
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     return myException != null;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -1314,22 +1174,11 @@ namespace CoreComponents.Threading.SubThreading
 
             get
             {
-                                                
-                bool LockTaken = false;
 
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     return myIsActive;
-
-                }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
 
                 }
 
@@ -1337,62 +1186,14 @@ namespace CoreComponents.Threading.SubThreading
             private set
             {
 
-                bool LockTaken = false;
-
-                try
+                lock(myLockObject)
                 {
-
-                    mySpinlock.Enter(ref LockTaken);
 
                     myIsActive = value;
 
                 }
-                finally
-                {
-
-                    if(LockTaken)
-                        mySpinlock.Exit();
-
-                }
 
             }
-
-        }
-
-        protected object Parameter 
-        {
-
-            get 
-            {
-
-                return myParameter;
-
-            }
-            set
-            {
-
-                myParameter = value;
-
-            }
-
-        }
-
-        protected bool HasParameter
-        {
-
-            get
-            {
-
-                return myParameter != null;
-
-            }
-
-        }
-
-        protected void ClearParameter()
-        {
-            
-            myParameter = null;
 
         }
 
@@ -1963,11 +1764,13 @@ namespace CoreComponents.Threading.SubThreading
 
                 mySleepEvent = null;
 
+                myThread = null;
+
             }
             else
             {
 
-                throw new Exception("The thread cannot be disposed of as it is still alive");
+                throw new Exception("The thread cannot be disposed as it is still alive");
 
             }
 

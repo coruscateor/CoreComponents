@@ -37,8 +37,8 @@ namespace CoreComponents.Threading
             set
             {
 
-                if(myHasEntered)
-                    throw new Exception("The lock is currently being held by this LockHog");
+                if(Volatile.Read(ref myHasEntered))
+                    throw new Exception("The lock is currently held");
 
                 myLockObject = value;
 
@@ -70,41 +70,61 @@ namespace CoreComponents.Threading
             get
             {
 
-                return myHasEntered;
+                return Volatile.Read(ref myHasEntered);
 
             }
+
+        }
+
+        protected void ThrowIfHeld()
+        {
+
+            if(Volatile.Read(ref myHasEntered))
+                throw new Exception("The lock is currently held");
+
+        }
+
+        protected void ThrowIfNotHeld()
+        {
+
+            if(!Volatile.Read(ref myHasEntered))
+                throw new Exception("The lock is currently not held");
 
         }
 
         public void Enter()
         {
 
+            ThrowIfHeld();
+
             Monitor.Enter(myLockObject);
 
-            myHasEntered = true;
+            Volatile.Write(ref myHasEntered, true);
 
         }
 
         public void Enter(ref bool lockTaken)
         {
 
+            ThrowIfHeld();
+
             bool LockTaken = false;
 
-            Monitor.Enter(myLockObject, ref LockTaken); 
+            Monitor.Enter(myLockObject, ref LockTaken);
 
-            myHasEntered = LockTaken;
+            Volatile.Write(ref myHasEntered, LockTaken);
 
         }
 
         public void Exit()
         {
 
-            if(myHasEntered)
+            if(Volatile.Read(ref myHasEntered))
             {
 
                 Monitor.Exit(myLockObject);
 
-                myHasEntered = false;
+                Volatile.Write(ref myHasEntered, false);
 
             }
 
@@ -209,12 +229,16 @@ namespace CoreComponents.Threading
         public void Pulse()
         {
 
+            ThrowIfNotHeld();
+
             Monitor.Pulse(myLockObject);
 
         }
 
         public void PulseAll()
         {
+
+            ThrowIfNotHeld();
 
             Monitor.PulseAll(myLockObject);
 
@@ -223,9 +247,11 @@ namespace CoreComponents.Threading
         public bool TryEnter()
         {
 
+            ThrowIfHeld();
+
             bool LockTaken = Monitor.TryEnter(myLockObject);
 
-            myHasEntered = LockTaken;
+            Volatile.Write(ref myHasEntered, LockTaken);
 
             return LockTaken;
 
@@ -234,10 +260,12 @@ namespace CoreComponents.Threading
         public bool TryEnter(int MillisecondsTimeout)
         {
 
+            ThrowIfHeld();
+
             if(Monitor.TryEnter(myLockObject, MillisecondsTimeout))
             {
 
-                myHasEntered = true;
+                Volatile.Write(ref myHasEntered, true);
 
                 return true;
 
@@ -251,14 +279,16 @@ namespace CoreComponents.Threading
         public bool TryEnterThenExit(int MillisecondsTimeout)
         {
 
+            ThrowIfHeld();
+
             if(Monitor.TryEnter(myLockObject, MillisecondsTimeout))
             {
 
-                myHasEntered = true;
+                Volatile.Write(ref myHasEntered, true);
 
                 Monitor.Exit(myLockObject);
 
-                myHasEntered = false;
+                Volatile.Write(ref myHasEntered, false);
 
                 return true;
 
@@ -271,13 +301,15 @@ namespace CoreComponents.Threading
         public bool TryEnterThenExit(int MillisecondsTimeout, int MillisecondsWait)
         {
 
+            ThrowIfHeld();
+
             if(Monitor.TryEnter(myLockObject, MillisecondsTimeout))
             {
 
                 try
                 {
 
-                    myHasEntered = true;
+                    Volatile.Write(ref myHasEntered, true);
 
                     Thread.Sleep(MillisecondsWait);
 
@@ -287,7 +319,7 @@ namespace CoreComponents.Threading
 
                     Monitor.Exit(myLockObject);
 
-                    myHasEntered = false;
+                    Volatile.Write(ref myHasEntered, false);
 
                 }
 
@@ -302,6 +334,8 @@ namespace CoreComponents.Threading
         public void TryEnter(ref bool LockTaken)
         {
 
+            ThrowIfHeld();
+
             bool LockIsTaken = false;
 
             Monitor.TryEnter(myLockObject, ref LockIsTaken);
@@ -309,7 +343,7 @@ namespace CoreComponents.Threading
             if(LockIsTaken)
             {
 
-                myHasEntered = true;
+                Volatile.Write(ref myHasEntered, true);
 
                 LockTaken = true;
 
@@ -320,10 +354,12 @@ namespace CoreComponents.Threading
         public bool TryEnter(TimeSpan Timeout)
         {
 
+            ThrowIfHeld();
+
             if(Monitor.TryEnter(Timeout))
             {
 
-                myHasEntered = true;
+                Volatile.Write(ref myHasEntered, true);
 
                 return true;
 
@@ -336,14 +372,16 @@ namespace CoreComponents.Threading
         public bool TryEnterThenExit(TimeSpan Timeout)
         {
 
+            ThrowIfHeld();
+
             if(Monitor.TryEnter(Timeout))
             {
 
-                myHasEntered = true;
+                Volatile.Write(ref myHasEntered, true);
 
                 Monitor.Exit(myLockObject);
 
-                myHasEntered = false;
+                Volatile.Write(ref myHasEntered, false);
 
                 return true;
 
@@ -356,13 +394,15 @@ namespace CoreComponents.Threading
         public bool TryEnterThenExit(TimeSpan Timeout, TimeSpan WaitTimeout)
         {
 
+            ThrowIfHeld();
+
             if(Monitor.TryEnter(myLockObject, Timeout))
             {
 
                 try
                 {
 
-                    myHasEntered = true;
+                    Volatile.Write(ref myHasEntered, true);
 
                     Thread.Sleep(WaitTimeout);
 
@@ -372,7 +412,7 @@ namespace CoreComponents.Threading
 
                     Monitor.Exit(myLockObject);
 
-                    myHasEntered = false;
+                    Volatile.Write(ref myHasEntered, false);
 
                 }
 
@@ -387,6 +427,8 @@ namespace CoreComponents.Threading
         public void TryEnter(int MillisecondsTimeout, ref bool LockTaken)
         {
 
+            ThrowIfHeld();
+
             bool LockIsTaken = false;
 
             Monitor.TryEnter(myLockObject, MillisecondsTimeout, ref LockIsTaken);
@@ -396,7 +438,7 @@ namespace CoreComponents.Threading
 
                 LockTaken = true;
 
-                myHasEntered = true;
+                Volatile.Write(ref myHasEntered, true);
 
             }
             
@@ -405,22 +447,29 @@ namespace CoreComponents.Threading
         public void TryEnter(TimeSpan Timeout, ref bool LockTaken)
         {
 
+            ThrowIfHeld();
+
             bool LockIsTaken = false;
 
             Monitor.TryEnter(myLockObject, Timeout, ref LockIsTaken);
 
             if(LockIsTaken)
+            {
+
                 LockTaken = true;
+
+                Volatile.Write(ref myHasEntered, true);
+
+            }
 
         }
 
         public bool Wait()
         {
 
-            if(!myHasEntered)
-                throw new Exception("Lock has not been entered");
+            ThrowIfNotHeld();
 
-            myHasEntered = false;
+            Volatile.Write(ref myHasEntered, false);
 
             try
             {
@@ -431,7 +480,7 @@ namespace CoreComponents.Threading
             finally
             {
 
-                myHasEntered = true;
+                Volatile.Write(ref myHasEntered, true);
 
             }
 
@@ -440,10 +489,9 @@ namespace CoreComponents.Threading
         public bool Wait(int MillisecondsTimeout)
         {
 
-            if(!myHasEntered)
-                throw new Exception("Lock has not been entered");
+            ThrowIfNotHeld();
 
-            myHasEntered = false;
+            Volatile.Write(ref myHasEntered, false);
 
             try
             {
@@ -454,7 +502,7 @@ namespace CoreComponents.Threading
             finally
             {
 
-                myHasEntered = true;
+                Volatile.Write(ref myHasEntered, true);
 
             }
 
@@ -463,10 +511,9 @@ namespace CoreComponents.Threading
         public bool Wait(TimeSpan Timeout)
         {
 
-            if(!myHasEntered)
-                throw new Exception("Lock has not been entered");
+            ThrowIfNotHeld();
 
-            myHasEntered = false;
+            Volatile.Write(ref myHasEntered, false);
 
             try
             {
@@ -477,7 +524,7 @@ namespace CoreComponents.Threading
             finally
             {
 
-                myHasEntered = true;
+                Volatile.Write(ref myHasEntered, true);
 
             }
 
@@ -486,8 +533,7 @@ namespace CoreComponents.Threading
         public bool Wait(int MillisecondsTimeout, bool ExitContext)
         {
 
-            if(!myHasEntered)
-                throw new Exception("Lock has not been entered");
+            ThrowIfNotHeld();
 
             myHasEntered = false;
 
@@ -509,10 +555,9 @@ namespace CoreComponents.Threading
         public bool Wait(TimeSpan Timeout, bool ExitContext)
         {
 
-            if(!myHasEntered)
-                throw new Exception("Lock has not been entered");
+            ThrowIfNotHeld();
 
-            myHasEntered = false;
+            Volatile.Write(ref myHasEntered, false);
 
             try
             {
@@ -523,7 +568,7 @@ namespace CoreComponents.Threading
             finally
             {
 
-                myHasEntered = true;
+                Volatile.Write(ref myHasEntered, true);
 
             }
 

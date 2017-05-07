@@ -505,6 +505,12 @@ namespace CoreComponents.Items
 
         }
 
+
+        object[] IToArray.ToArray()
+        {
+            throw new NotImplementedException();
+        }
+
     }
 
 }
